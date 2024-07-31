@@ -31,6 +31,7 @@ const PoisonPickerModal = ({ open, handleClose, drinks }) => {
     };
 
     filterDrinks();
+    setSelectedDrink(null); // Reset selectedDrink when filters change
   }, [selectedStyles, hadBefore, priceRange, drinks]);
 
   const handlePick = () => {
