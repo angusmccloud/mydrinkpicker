@@ -11,7 +11,6 @@ const PoisonPickerModal = ({ open, handleClose, drinks }) => {
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [filteredDrinks, setFilteredDrinks] = useState(drinks);
   const [selectedDrink, setSelectedDrink] = useState(null);
-  const [isSpinning, setIsSpinning] = useState(false);
 
   useEffect(() => {
     const filterDrinks = () => {
@@ -34,13 +33,9 @@ const PoisonPickerModal = ({ open, handleClose, drinks }) => {
     filterDrinks();
   }, [selectedStyles, hadBefore, priceRange, drinks]);
 
-  const handleSpin = () => {
-    setIsSpinning(true);
-    setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * filteredDrinks.length);
-      setSelectedDrink(filteredDrinks[randomIndex]);
-      setIsSpinning(false);
-    }, 2000);
+  const handlePick = () => {
+    const randomIndex = Math.floor(Math.random() * filteredDrinks.length);
+    setSelectedDrink(filteredDrinks[randomIndex]);
   };
 
   const handleModalClose = () => {
@@ -80,8 +75,8 @@ const PoisonPickerModal = ({ open, handleClose, drinks }) => {
         max={Math.max(...drinks.map(drink => drink.cost))}
       />
       <Typography variant="body1">Number of drinks: {filteredDrinks.length}</Typography>
-      <Button onClick={handleSpin} disabled={isSpinning || filteredDrinks.length === 0}>
-        {isSpinning ? 'Spinning...' : 'Pick One'}
+      <Button onClick={handlePick} disabled={filteredDrinks.length === 0}>
+        Pick One
       </Button>
       {selectedDrink && (
         <Box mt={2}>
