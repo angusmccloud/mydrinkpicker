@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Slider, Button } from '@mui/material';
+import { Box, Slider } from '@mui/material';
 import BaseModal from '../../components/BaseModal/BaseModal';
 import SelectInput from '../../components/SelectInput/SelectInput';
+import Button from '../../components/Button/Button';
+import Typography from '../../components/Typography/Typography';
 
 const PoisonPickerModal = ({ open, handleClose, drinks }) => {
   const [selectedStyles, setSelectedStyles] = useState([]);
