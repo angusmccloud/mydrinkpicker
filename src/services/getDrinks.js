@@ -133,4 +133,12 @@ const drinks = [
   }
 ];
 
-export default drinks;
+const getDrinks = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(drinks);
+    }, 100);
+  });
+}
+
+export default getDrinks;
