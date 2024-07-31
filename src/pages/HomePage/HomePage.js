@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 // import { DataStore } from 'aws-amplify';
 import { PageContent } from '../../containers';
 import { AuthContext } from '../../contexts';
+import DrinkListContainer from '../../containers/DrinkListContainer/DrinkListContainer';
 
 const HomePage = () => {
   const { user } = useContext(AuthContext);
@@ -11,7 +12,7 @@ const HomePage = () => {
       pageName=''
       pageKey='home'
     >
-      Placeholder for now
+      <DrinkListContainer />
     </PageContent>
   );
 }
