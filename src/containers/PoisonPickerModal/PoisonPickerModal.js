@@ -41,8 +41,16 @@ const PoisonPickerModal = ({ open, handleClose, drinks }) => {
     }, 2000);
   };
 
+  const handleModalClose = () => {
+    setSelectedStyles([]);
+    setHadBefore('both');
+    setPriceRange([0, 1000]);
+    setSelectedDrink(null);
+    handleClose();
+  };
+
   return (
-    <BaseModal open={open} handleClose={handleClose}>
+    <BaseModal open={open} handleClose={handleModalClose}>
       <Typography variant="h6">Pick a Poison</Typography>
       <SelectInput
         label="Styles"
@@ -75,8 +83,7 @@ const PoisonPickerModal = ({ open, handleClose, drinks }) => {
       </Button>
       {selectedDrink && (
         <Box mt={2}>
-          <Typography variant="h6">Selected Drink</Typography>
-          <Typography variant="body1">{selectedDrink.name}</Typography>
+          <Typography variant="h6">{selectedDrink.name}</Typography>
         </Box>
       )}
     </BaseModal>
