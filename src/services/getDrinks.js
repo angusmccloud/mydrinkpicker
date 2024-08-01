@@ -9,11 +9,11 @@ const getDrinks = () => {
 
         let bottleStatus = 'Closed';
         const bottleStatuses = drink.bottles.map(bottle => bottle.status);
-        if (bottleStatuses.every(status => status === 'empty')) {
+        if (bottleStatuses.every(status => status === 'Empty')) {
           bottleStatus = 'Empty';
-        } else if (bottleStatuses.every(status => status === 'sample')) {
+        } else if (bottleStatuses.every(status => status === 'Sample')) {
           bottleStatus = 'Sample';
-        } else if (bottleStatuses.some(status => status === 'open')) {
+        } else if (bottleStatuses.some(status => status === 'Open')) {
           bottleStatus = 'Open';
         }
 
