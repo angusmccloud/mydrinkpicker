@@ -8,12 +8,12 @@ const getDrinks = () => {
         const averagePrice = nonNullPrices.reduce((acc, price) => acc + price, 0) / nonNullPrices.length;
 
         let bottleStatus = 'Closed';
-        const bottleStatuses = drink.bottles.map(bottle => bottle.status);
-        if (bottleStatuses.every(status => status === 'Empty')) {
+        const bottleStatuses = drink.bottles.map(bottle => bottle.status.toLowerCase());
+        if (bottleStatuses.every(status => status === 'empty')) {
           bottleStatus = 'Empty';
-        } else if (bottleStatuses.every(status => status === 'Sample')) {
+        } else if (bottleStatuses.every(status => status === 'sample')) {
           bottleStatus = 'Sample';
-        } else if (bottleStatuses.some(status => status === 'Open')) {
+        } else if (bottleStatuses.some(status => status === 'open')) {
           bottleStatus = 'Open';
         }
 
