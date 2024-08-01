@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 // import { Auth, DataStore } from 'aws-amplify';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   AppBar,
   Box,
@@ -17,7 +17,7 @@ import {
   Menu as MenuIcon,
   Delete,
 } from '@mui/icons-material';
-import { ConditionalWrapper, Divider, Typography } from '../../components';
+import { ConditionalWrapper, Divider, Typography, Button } from '../../components';
 import { AuthContext, UnauthedUser } from '../../contexts';
 // import { pagePermissions } from '../../utils';
 
@@ -31,6 +31,7 @@ const Header = (props) => {
   const theme = useTheme();
   const userOpen = Boolean(userAnchorEl);
   const navigationOpen = Boolean(navigationAnchorEl);
+  const location = useLocation();
 
   const handleClickUserMenu = (currentTarget, whichSide) => {
     setUserMenuSide(whichSide);
@@ -95,6 +96,29 @@ const Header = (props) => {
         >
           <AccountCircle />
         </IconButton>
+      </>
+    );
+  };
+
+  const renderNavigationButtons = () => {
+    return (
+      <>
+        <Button
+          component={Link}
+          to="/"
+          color="inherit"
+          disabled={location.pathname === '/'}
+        >
+          Home
+        </Button>
+        <Button
+          component={Link}
+          to="/manage-drinks"
+          color="inherit"
+          disabled={location.pathname === '/manage-drinks'}
+        >
+          Manage Drinks
+        </Button>
       </>
     );
   };
@@ -188,6 +212,7 @@ const Header = (props) => {
                       </ConditionalWrapper>
                     );
                   })}
+                  {renderNavigationButtons()}
                 </Menu>
               </Box>
             )}
@@ -231,6 +256,7 @@ const Header = (props) => {
                         </Typography>
                       </ConditionalWrapper>
                     ))}
+                    {renderNavigationButtons()}
                   </>
                 </Box>
               </>
