@@ -11,6 +11,8 @@ const PoisonPickerModal = ({ open, handleClose, drinks }) => {
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [filteredDrinks, setFilteredDrinks] = useState(drinks);
   const [selectedDrink, setSelectedDrink] = useState(null);
+  const [selectedDrink, setSelectedDrink] = useState(null);
+
 
   useEffect(() => {
     const filterDrinks = () => {
@@ -89,3 +91,38 @@ const PoisonPickerModal = ({ open, handleClose, drinks }) => {
 };
 
 export default PoisonPickerModal;
+
+// const drinks = [
+//   {
+//     drinkId: '9512',
+//     brand: 'Glenfarclas',
+//     name: '12-year-old',
+//     bottlingSerie: 'New Label',
+//     statedAge: 12,
+//     strength: 43,
+//     type: 'Scotch',
+//     bottles: [
+//       {
+//         id: '4802fadf-c67d-4fea-9917-f143e226f4c9',
+//         status: 'open',
+//         size: 750,
+//         price: 69,
+//         dateAdded: new Date('2024-02-18'),
+//       },
+//       {
+//         id: 'ab50bf83-6937-4da0-a0ed-6f31a0f27308',
+//         status: 'empty',
+//         size: 750,
+//         price: 50,
+//         dateAdded: new Date('2021-03-18'),
+//       },
+//       {
+//         id: '30b5ef7e-2133-4a8b-bfb9-2603e4c27bbf',
+//         status: 'empty',
+//         size: 750,
+//         price: 55,
+//         dateAdded: new Date('2020-12-23'),
+//       },
+//     ]
+//   }
+// ]
