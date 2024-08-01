@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
-import { Drink } from '../../types/drink';
-import { Bottle } from '../../types/bottle';
 import { formatDate } from '../../utils/dateUtils';
 
 const ManageDrinksPage = () => {
@@ -33,6 +31,7 @@ const ManageDrinksPage = () => {
               statedAge: row['Stated Age'] || '',
               strength: row['Strength'],
               type: row['List'],
+              imageUrl: row['Photo'] || '',
               bottles: [],
             };
           }
