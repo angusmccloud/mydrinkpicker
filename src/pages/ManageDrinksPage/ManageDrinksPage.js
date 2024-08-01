@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 import { formatDate } from '../../utils/dateUtils';
+import PageContent from '../../containers/PageContent/PageContent';
 
 const ManageDrinksPage = () => {
   const [drinkList, setDrinkList] = useState([]);
@@ -56,7 +57,7 @@ const ManageDrinksPage = () => {
   };
 
   return (
-    <div>
+    <PageContent pageName="Manage Drinks" pageKey="manage-drinks">
       <h1>Manage Drinks</h1>
       <input type="file" accept=".xlsx" onChange={handleFileUpload} />
       {loading && <p>Loading...</p>}
@@ -81,7 +82,7 @@ const ManageDrinksPage = () => {
           </ul>
         )}
       </div>
-    </div>
+    </PageContent>
   );
 };
 
