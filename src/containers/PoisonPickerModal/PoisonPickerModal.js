@@ -11,7 +11,6 @@ const PoisonPickerModal = ({ open, handleClose, drinks }) => {
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [filteredDrinks, setFilteredDrinks] = useState(drinks);
   const [selectedDrink, setSelectedDrink] = useState(null);
-  const [selectedDrink, setSelectedDrink] = useState(null);
 
 
   useEffect(() => {
