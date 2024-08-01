@@ -113,7 +113,7 @@ function App() {
   //           userId: undefined,
   //           congnitoId: user.congnitoId, // Came from Cognito
   //           name: user.email,
-  //           enabled: false,
+  //           enabled: false, // Will come from DB
   //           roles: [],
   //           practices: [],
   //         };
@@ -209,11 +209,12 @@ function App() {
       >
         <AuthContext.Provider value={{ user: user, setUser: setUser }}>
           <div>
-            {/* {user.isAuthed || user.authCheckPending ? ( */}
+            {/* {user.isAuthed || user.authCheckPending ? (
               <RouterProvider router={router} />
-            {/* ) : (
+            ) : (
               <RouterProvider router={notLoggedInRouter} />
             )} */}
+            <RouterProvider router={router} />
             <Snackbar
               open={showSnackbar}
               onClose={onDismissSnackBar}
