@@ -12,7 +12,7 @@ const HomePage = () => {
     const fetchDrinks = async () => {
       const drinksData = await getDrinks();
       setDrinks(drinksData);
-      console.log(drinksData);
+      // console.log(drinksData);
     };
 
     fetchDrinks();

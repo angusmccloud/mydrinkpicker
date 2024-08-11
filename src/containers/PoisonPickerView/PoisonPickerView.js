@@ -11,10 +11,68 @@ const PoisonPickerView = ({ drinks }) => {
   const [ageRange, setAgeRange] = useState([0, 100]);
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [filteredDrinks, setFilteredDrinks] = useState([]);
+  const [possibleDrinks, setPossibleDrinks] = useState([]);
+  const [sliderOptions, setSliderOptions] = useState({
+    strength: { min: 0, max: 100 },
+    age: { min: 0, max: 100 },
+    price: { min: 0, max: 100 },
+  });
+
+  const strengthValueLabelFormat = (value) => {
+    const min = sliderOptions.strength.min;
+    const max = sliderOptions.strength.max;
+    const range = max - min;
+
+    // Scale the 0-100 value to the actual range
+    const scaledValue = (value / 100) * range + min;
+    return scaledValue.toFixed(1);
+  }
+
+  const ageValueLabelFormat = (value) => {
+    const min = sliderOptions.age.min;
+    const max = sliderOptions.age.max;
+    const range = max - min;
+
+    // Scale the 0-100 value to the actual range
+    const scaledValue = (value / 100) * range + min;
+    return scaledValue.toFixed(0);
+  }
+
+  const priceValueLabelFormat = (value) => {
+    const min = sliderOptions.price.min;
+    const max = sliderOptions.price.max;
+    const range = max - min;
+
+    // Scale the 0-100 value to the actual range
+    const scaledValue = (value / 100) * range + min;
+    return scaledValue.toLocaleString();
+  }
+
+  const handlePick = () => {
+    const randomIndex = Math.floor(Math.random() * filteredDrinks.length);
+    const selectedDrink = filteredDrinks[randomIndex];
+    alert(`You picked: ${selectedDrink.name}`);
+  };
+
+  useEffect(() => {
+    // Remove Sample and Empty drinks
+    const possibleDrinks = drinks.filter(drink => drink.bottleStatus === 'Open' || drink.bottleStatus === 'Closed');
+    setPossibleDrinks(possibleDrinks);
+
+    // Set slider options
+    const strengthMin = Math.min(...possibleDrinks.map(drink => drink.strength || 0));
+    const strengthMax = Math.max(...possibleDrinks.map(drink => drink.strength));
+    const ageMin = Math.min(...possibleDrinks.map(drink => drink.statedAge || 0));
+    const ageMax = Math.max(...possibleDrinks.map(drink => drink.statedAge || 0));
+    const priceMin = Math.min(...possibleDrinks.map(drink => drink.price || 0));
+    const priceMax = Math.max(...possibleDrinks.map(drink => drink.price || 0));
+    // console.log(strengthMin, strengthMax, ageMin, ageMax, priceMin, priceMax);
+    setSliderOptions({ strength: { min: strengthMin, max: strengthMax }, age: { min: ageMin, max: ageMax }, price: { min: priceMin, max: priceMax } });
+  }, [drinks]);
 
   useEffect(() => {
     const filterDrinks = () => {
-      let filtered = drinks;
+      let filtered = [...possibleDrinks];
 
       if (bottleStatus !== 'No Preference') {
         filtered = filtered.filter(drink => drink.bottleStatus === bottleStatus);
@@ -32,13 +90,7 @@ const PoisonPickerView = ({ drinks }) => {
     };
 
     filterDrinks();
-  }, [bottleStatus, selectedTypes, strengthRange, ageRange, priceRange, drinks]);
-
-  const handlePick = () => {
-    const randomIndex = Math.floor(Math.random() * filteredDrinks.length);
-    const selectedDrink = filteredDrinks[randomIndex];
-    alert(`You picked: ${selectedDrink.name}`);
-  };
+  }, [bottleStatus, selectedTypes, strengthRange, ageRange, priceRange, possibleDrinks]);
 
   return (
     <div>
@@ -57,7 +109,7 @@ const PoisonPickerView = ({ drinks }) => {
         label="Types"
         value={selectedTypes}
         setValue={setSelectedTypes}
-        options={Array.from(new Set(drinks.map(drink => drink.type))).map(type => ({ value: type, label: type }))}
+        options={Array.from(new Set(possibleDrinks.map(drink => drink.type))).map(type => ({ value: type, label: type }))}
         multiple
       />
       <Typography gutterBottom>Strength Range</Typography>
@@ -65,24 +117,27 @@ const PoisonPickerView = ({ drinks }) => {
         value={strengthRange}
         onChange={(e, newValue) => setStrengthRange(newValue)}
         valueLabelDisplay="auto"
-        min={Math.min(...drinks.map(drink => drink.strength || 0))}
-        max={Math.max(...drinks.map(drink => drink.strength))}
+        valueLabelFormat={strengthValueLabelFormat}
+        min={sliderOptions.strength.min}
+        max={sliderOptions.strength.max}
       />
       <Typography gutterBottom>Age Range</Typography>
       <Slider
         value={ageRange}
         onChange={(e, newValue) => setAgeRange(newValue)}
         valueLabelDisplay="auto"
-        min={Math.min(...drinks.map(drink => drink.statedAge || 0))}
-        max={Math.max(...drinks.map(drink => drink.statedAge || 0))}
+        valueLabelFormat={ageValueLabelFormat}
+        min={sliderOptions.age.min}
+        max={sliderOptions.age.max}
       />
       <Typography gutterBottom>Price Range</Typography>
       <Slider
         value={priceRange}
         onChange={(e, newValue) => setPriceRange(newValue)}
         valueLabelDisplay="auto"
-        min={Math.min(...drinks.map(drink => drink.price || 0))}
-        max={Math.max(...drinks.map(drink => drink.price || 0))}
+        valueLabelFormat={priceValueLabelFormat}
+        min={sliderOptions.price.min}
+        max={sliderOptions.price.max}
       />
       <Button onClick={handlePick} disabled={filteredDrinks.length === 0}>
         Pick One
