@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 import { formatDate } from '../../utils/dateUtils';
 import PageContent from '../../containers/PageContent/PageContent';
+import getDrinks from '../../services/getDrinks';
+import DrinkList from '../../containers/DrinkList/DrinkList';
 
 const ManageDrinksPage = () => {
-  const [drinkList, setDrinkList] = useState([]);
+  const [drinks, setDrinks] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchDrinks = async () => {
+      const drinksData = await getDrinks();
+      setDrinks(drinksData);
+    };
+
+    fetchDrinks();
+  }, []);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -48,9 +59,9 @@ const ManageDrinksPage = () => {
           drinks[drinkId].bottles.push(bottle);
         });
 
-        setDrinkList(Object.values(drinks));
         localStorage.setItem('drinkList', JSON.stringify(Object.values(drinks)));
         setLoading(false);
+        fetchDrinks();
       };
       reader.readAsArrayBuffer(file);
     }
@@ -63,24 +74,7 @@ const ManageDrinksPage = () => {
       {loading && <p>Loading...</p>}
       <div>
         <h2>Drink List</h2>
-        {drinkList.length === 0 ? (
-          <p>No drinks available</p>
-        ) : (
-          <ul>
-            {drinkList.map((drink) => (
-              <li key={drink.drinkId}>
-                {drink.brand} - {drink.name}
-                <ul>
-                  {drink.bottles.map((bottle) => (
-                    <li key={bottle.id}>
-                      {bottle.status} - {bottle.size}ml - ${bottle.price} - Added on {bottle.dateAdded}
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        )}
+        <DrinkList drinks={drinks} />
       </div>
     </PageContent>
   );
