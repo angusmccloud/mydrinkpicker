@@ -25,7 +25,7 @@ const PoisonPickerView = ({ drinks }) => {
       }
 
       filtered = filtered.filter(drink => drink.strength >= strengthRange[0] && drink.strength <= strengthRange[1]);
-      filtered = filtered.filter(drink => (drink.age === null || (drink.age >= ageRange[0] && drink.age <= ageRange[1])));
+      filtered = filtered.filter(drink => (drink.statedAge === null || (drink.statedAge >= ageRange[0] && drink.statedAge <= ageRange[1])));
       filtered = filtered.filter(drink => (drink.price === null || (drink.price >= priceRange[0] && drink.price <= priceRange[1])));
 
       setFilteredDrinks(filtered);
@@ -64,7 +64,7 @@ const PoisonPickerView = ({ drinks }) => {
       <Slider
         value={strengthRange}
         onChange={(e, newValue) => setStrengthRange(newValue)}
-        valueLabelDisplay="auto"
+        valueLabelDisplay="on"
         min={0}
         max={Math.max(...drinks.map(drink => drink.strength))}
       />
@@ -72,7 +72,7 @@ const PoisonPickerView = ({ drinks }) => {
       <Slider
         value={ageRange}
         onChange={(e, newValue) => setAgeRange(newValue)}
-        valueLabelDisplay="auto"
+        valueLabelDisplay="on"
         min={0}
         max={Math.max(...drinks.map(drink => drink.age || 0))}
       />
@@ -80,7 +80,7 @@ const PoisonPickerView = ({ drinks }) => {
       <Slider
         value={priceRange}
         onChange={(e, newValue) => setPriceRange(newValue)}
-        valueLabelDisplay="auto"
+        valueLabelDisplay="on"
         min={0}
         max={Math.max(...drinks.map(drink => drink.price || 0))}
       />
