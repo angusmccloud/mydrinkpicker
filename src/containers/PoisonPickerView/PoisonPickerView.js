@@ -64,24 +64,24 @@ const PoisonPickerView = ({ drinks }) => {
       <Slider
         value={strengthRange}
         onChange={(e, newValue) => setStrengthRange(newValue)}
-        valueLabelDisplay="on"
-        min={0}
+        valueLabelDisplay="auto"
+        min={Math.min(...drinks.map(drink => drink.strength || 0))}
         max={Math.max(...drinks.map(drink => drink.strength))}
       />
       <Typography gutterBottom>Age Range</Typography>
       <Slider
         value={ageRange}
         onChange={(e, newValue) => setAgeRange(newValue)}
-        valueLabelDisplay="on"
-        min={0}
-        max={Math.max(...drinks.map(drink => drink.age || 0))}
+        valueLabelDisplay="auto"
+        min={Math.min(...drinks.map(drink => drink.statedAge || 0))}
+        max={Math.max(...drinks.map(drink => drink.statedAge || 0))}
       />
       <Typography gutterBottom>Price Range</Typography>
       <Slider
         value={priceRange}
         onChange={(e, newValue) => setPriceRange(newValue)}
-        valueLabelDisplay="on"
-        min={0}
+        valueLabelDisplay="auto"
+        min={Math.min(...drinks.map(drink => drink.price || 0))}
         max={Math.max(...drinks.map(drink => drink.price || 0))}
       />
       <Button onClick={handlePick} disabled={filteredDrinks.length === 0}>
