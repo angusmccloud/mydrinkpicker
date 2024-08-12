@@ -1,12 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 import { formatDate } from '../../utils/dateUtils';
 import PageContent from '../../containers/PageContent/PageContent';
+import getDrinks from '../../services/getDrinks';
+import DrinkList from '../../containers/DrinkList/DrinkList';
+import TextField from '@mui/material/TextField';
+import { useTheme } from '@mui/material';
 
 const ManageDrinksPage = () => {
-  const [drinkList, setDrinkList] = useState([]);
+  const [drinks, setDrinks] = useState([]);
+  const [displayedDrinks, setDisplayedDrinks] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchTerms, setSearchTerms] = useState('');
+
+  const theme = useTheme();
+
+  const fetchDrinks = async () => {
+    const drinksData = await getDrinks();
+    setDrinks(drinksData);
+    applyDisplayFilter(searchTerms);
+  };
+
+  const applyDisplayFilter = (searchWords) => {
+    if(searchWords.length === 0) {
+      setDisplayedDrinks(drinks);
+    } else {
+      const searchWordsArray = searchWords.split(' ');
+      const filteredDrinks = drinks.filter((drink) => {
+        const drinkString = JSON.stringify(drink).toLowerCase();
+        return searchWordsArray.every((word) => drinkString.includes(word));
+      });
+      setDisplayedDrinks(filteredDrinks);
+    }
+  }
+
+  const handleSearchChange = (searchWords) => {
+    setSearchTerms(searchWords);
+    applyDisplayFilter(searchWords);
+  };
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -28,7 +60,7 @@ const ManageDrinksPage = () => {
               drinkId: drinkId,
               brand: row['Brand'],
               name: row['Name'],
-              bottlingSerie: row['Bottling Serie'] || '',
+              bottlingSerie: row['Bottling serie'] || '',
               statedAge: row['Stated Age'] || '',
               strength: row['Strength'],
               type: row['List'],
@@ -39,7 +71,7 @@ const ManageDrinksPage = () => {
 
           const bottle = {
             id: uuidv4(),
-            status: row['Bottle Status'],
+            status: row['Bottle status'],
             size: row['Size'],
             price: row['Price Paid'],
             dateAdded: formatDate(row['Added on']),
@@ -48,40 +80,40 @@ const ManageDrinksPage = () => {
           drinks[drinkId].bottles.push(bottle);
         });
 
-        setDrinkList(Object.values(drinks));
         localStorage.setItem('drinkList', JSON.stringify(Object.values(drinks)));
         setLoading(false);
+        fetchDrinks();
       };
       reader.readAsArrayBuffer(file);
     }
   };
 
+  const renderHeader = () => {
+    return (
+      <div style={{paddingBottom: 10, borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: theme.palette.primary.main}}>
+        <p>Replace Your Full Drink List from Excel:</p>
+        <input type="file" accept=".xlsx" onChange={handleFileUpload} />
+        <div style={{marginTop: 10}}>
+          <TextField 
+            id="searchDrinks"
+            label="Search Your Drinks"
+            value={searchTerms}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            disabled={drinks.length === 0}
+          />          
+        </div>
+      </div>
+    )
+  }
+
+  useEffect(() => {
+    fetchDrinks();
+  }, []);
+
   return (
     <PageContent pageName="Manage Drinks" pageKey="manage-drinks">
-      <h1>Manage Drinks</h1>
-      <input type="file" accept=".xlsx" onChange={handleFileUpload} />
-      {loading && <p>Loading...</p>}
-      <div>
-        <h2>Drink List</h2>
-        {drinkList.length === 0 ? (
-          <p>No drinks available</p>
-        ) : (
-          <ul>
-            {drinkList.map((drink) => (
-              <li key={drink.drinkId}>
-                {drink.brand} - {drink.name}
-                <ul>
-                  {drink.bottles.map((bottle) => (
-                    <li key={bottle.id}>
-                      {bottle.status} - {bottle.size}ml - ${bottle.price} - Added on {bottle.dateAdded}
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {renderHeader()}
+      <DrinkList drinks={displayedDrinks} renderHeader={renderHeader} />
     </PageContent>
   );
 };
