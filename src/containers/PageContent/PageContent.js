@@ -13,10 +13,7 @@ const PageContent = (props) => {
         pageName={pageName}
         pageKey={pageKey}
       />
-      <Container sx={{
-        padding: fullScreen ? '0px !important' : '20px 50px',
-        maxWidth: fullScreen ? '100% !important' : null,
-      }}>
+      <Container sx={{height: '100vh', marginTop: '0px'}} component={'div'}>
         {children}
       </Container>
     </>

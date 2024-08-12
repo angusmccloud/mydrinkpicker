@@ -12,3 +12,12 @@ export const oxfordComma = (arr, conjunction, ifempty) => {
   arr[l - 1] = `${conjunction} ${arr[l - 1]}`;
   return arr.join(", ");
 }
+
+export const formatCurrency = (amount, decimalPlaces = 2) => {
+  // Format currency with commas and X decimal places
+  if(decimalPlaces > 0) {
+    return "$" + amount.toFixed(decimalPlaces).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+  }
+  // If decimal places is 0, simple add Comma and dollar sign
+  return "$" + Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}

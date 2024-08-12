@@ -1,7 +1,8 @@
 import React from 'react';
 import { ListItem, ListItemAvatar, ListItemText, Avatar } from '@mui/material';
 import { Typography } from '../../components';
-import { Image, LocalDrink } from '@mui/icons-material';
+import { formatCurrency } from '../../utils';
+import { Liquor } from '@mui/icons-material';
 
 const DrinkListItem = ({ drink }) => {
   const { brand, name, bottlingSerie, type, statedAge, strength, imageUrl, bottleStatus, bottles, price } = drink;
@@ -9,20 +10,21 @@ const DrinkListItem = ({ drink }) => {
   const title = `${brand} ${name}${bottlingSerie ? ` (${bottlingSerie})` : ''}`;
 
   return (
-    <ListItem>
-      <ListItemAvatar>
+    <ListItem sx={{paddingLeft: 0}}>
+      <ListItemAvatar sx={{marginRight: '10px'}}>
         {imageUrl ? (
-          <Avatar src={imageUrl} />
+          // <Avatar sx={{ height: 75, width: 75 }} variant={'rounded'} src={imageUrl} />
+          <img src={imageUrl} alt={title} style={{ width: 75, height: 75, objectFit: 'contain' }} />
         ) : (
-          <Avatar>
-            <LocalDrink />
+          <Avatar sx={{ height: 75, width: 75 }}>
+            <Liquor fontSize={'large'} />
           </Avatar>
         )}
       </ListItemAvatar>
       <ListItemText
         primary={title}
         secondary={
-          <>
+          <div>
             <Typography component="span" variant="body2" color="textPrimary">
               {type}
             </Typography>
@@ -42,18 +44,18 @@ const DrinkListItem = ({ drink }) => {
                 </Typography>
               </>
             )}
-            {price && (
+            {price > 0 && (
               <>
                 {' - '}
                 <Typography component="span" variant="body2" color="textPrimary">
-                  ${price.toFixed(2)}
+                  {formatCurrency(price, 0)}
                 </Typography>
               </>
             )}
-            <Typography component="span" variant="body2" color="textPrimary">
-              {bottleStatus} - {bottles.length} bottles
+            <Typography component="div" variant="body2" color="textPrimary">
+              {bottleStatus} - {bottles.length} bottle{bottles.length > 1 ? 's' : ''}
             </Typography>
-          </>
+          </div>
         }
       />
     </ListItem>
