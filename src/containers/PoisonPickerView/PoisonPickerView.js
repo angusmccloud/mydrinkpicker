@@ -118,6 +118,7 @@ const PoisonPickerView = ({ drinks }) => {
         onChange={(e, newValue) => setStrengthRange(newValue)}
         valueLabelDisplay="auto"
         valueLabelFormat={strengthValueLabelFormat}
+        step={100 / ( sliderOptions.strength.max - sliderOptions.strength.min )}
         min={sliderOptions.strength.min}
         max={sliderOptions.strength.max}
       />
@@ -127,6 +128,7 @@ const PoisonPickerView = ({ drinks }) => {
         onChange={(e, newValue) => setAgeRange(newValue)}
         valueLabelDisplay="auto"
         valueLabelFormat={ageValueLabelFormat}
+        step={100 / ( sliderOptions.age.max - sliderOptions.age.min )}
         min={sliderOptions.age.min}
         max={sliderOptions.age.max}
       />
@@ -136,6 +138,7 @@ const PoisonPickerView = ({ drinks }) => {
         onChange={(e, newValue) => setPriceRange(newValue)}
         valueLabelDisplay="auto"
         valueLabelFormat={priceValueLabelFormat}
+        step={100 / ( sliderOptions.price.max - sliderOptions.price.min )}
         min={sliderOptions.price.min}
         max={sliderOptions.price.max}
       />
