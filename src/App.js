@@ -3,27 +3,20 @@ import React, { useEffect, useState } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { Snackbar, Alert } from '@mui/material';
+import { Authenticator } from '@aws-amplify/ui-react';
+import { Amplify } from 'aws-amplify';
 import {
   ErrorPage,
   HomePage,
   NotLoggedInPage,
   ManageDrinksPage
-} from './pages';
-import { SnackbarContext, DefaultSnackbar, AuthContext, UnauthedUser } from './contexts';
-import { lightTheme } from './theme/theme';
+} from 'pages';
+import { SnackbarContext, DefaultSnackbar, AuthContext, UnauthedUser } from 'contexts';
+import { lightTheme } from 'theme/theme';
+import outputs from '../amplify_outputs.json';
+import '@aws-amplify/ui-react/styles.css';
 
-// import aws_exports from './aws-exports';
-// Amplify.configure({
-//   ...aws_exports,
-//   oauth: {
-//     ...aws_exports.oauth,
-//     // Unclear why, but AWS Exports is missing this information...
-//     scope: ['email', 'openid'],
-//     redirectSignIn: process.env.REACT_APP_SIGNIN_URL,
-//     redirectSignOut: process.env.REACT_APP_SIGNIN_URL,
-//     responseType: 'code',
-//   },
-// });
+Amplify.configure(outputs);
 
 const router = createBrowserRouter([
   {
@@ -128,7 +121,7 @@ function App() {
   //     }
   //   }
   // }, [user]);
-  
+
   // useEffect(() => {
   //   const unsubscribe = Hub.listen('auth', ({ payload: { event, data } }) => {
   //     switch (event) {
@@ -203,33 +196,37 @@ function App() {
   // }, [awsUser])
 
   return (
-    <ThemeProvider theme={lightTheme}>
-      <SnackbarContext.Provider
-        value={{ snackbar: snackbarDetails, setSnackbar }}
-      >
-        <AuthContext.Provider value={{ user: user, setUser: setUser }}>
-          <div>
-            {/* {user.isAuthed || user.authCheckPending ? (
+    <Authenticator>
+      {({ signOut, user }) => (
+        <ThemeProvider theme={lightTheme}>
+          <SnackbarContext.Provider
+            value={{ snackbar: snackbarDetails, setSnackbar }}
+          >
+            <AuthContext.Provider value={{ user: user, setUser: setUser }}>
+              <div>
+                {/* {user.isAuthed || user.authCheckPending ? (
               <RouterProvider router={router} />
             ) : (
               <RouterProvider router={notLoggedInRouter} />
             )} */}
-            <RouterProvider router={router} />
-            <Snackbar
-              open={showSnackbar}
-              onClose={onDismissSnackBar}
-              message={snackbarDetails.message}
-              action={snackbarDetails.action}
-              autoHideDuration={snackbarDetails.duration}
-            >
-              <Alert onClose={onDismissSnackBar} severity={snackbarDetails.severity} sx={{ width: '100%' }}>
-                {snackbarDetails.message}
-              </Alert>
-            </Snackbar>
-          </div>
-        </AuthContext.Provider>
-      </SnackbarContext.Provider>
-    </ThemeProvider>
+                <RouterProvider router={router} />
+                <Snackbar
+                  open={showSnackbar}
+                  onClose={onDismissSnackBar}
+                  message={snackbarDetails.message}
+                  action={snackbarDetails.action}
+                  autoHideDuration={snackbarDetails.duration}
+                >
+                  <Alert onClose={onDismissSnackBar} severity={snackbarDetails.severity} sx={{ width: '100%' }}>
+                    {snackbarDetails.message}
+                  </Alert>
+                </Snackbar>
+              </div>
+            </AuthContext.Provider>
+          </SnackbarContext.Provider>
+        </ThemeProvider>
+      )}
+    </Authenticator>
   );
 }
 
