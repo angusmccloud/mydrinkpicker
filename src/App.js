@@ -13,7 +13,7 @@ import {
 } from 'pages';
 import { SnackbarContext, DefaultSnackbar, AuthContext, UnauthedUser } from 'contexts';
 import { lightTheme } from 'theme/theme';
-import outputs from '../amplify_outputs.json';
+import outputs from './amplify_outputs.json';
 import '@aws-amplify/ui-react/styles.css';
 
 Amplify.configure(outputs);
