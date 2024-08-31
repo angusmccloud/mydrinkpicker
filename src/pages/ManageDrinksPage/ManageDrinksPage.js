@@ -7,6 +7,7 @@ import getDrinks from '../../services/getDrinks';
 import DrinkList from '../../containers/DrinkList/DrinkList';
 import TextField from '@mui/material/TextField';
 import { useTheme } from '@mui/material';
+import { API, Auth } from 'aws-amplify';
 
 const ManageDrinksPage = () => {
   const [drinks, setDrinks] = useState([]);
@@ -40,12 +41,12 @@ const ManageDrinksPage = () => {
     applyDisplayFilter(searchWords);
   };
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
       setLoading(true);
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
@@ -80,7 +81,53 @@ const ManageDrinksPage = () => {
           drinks[drinkId].bottles.push(bottle);
         });
 
-        localStorage.setItem('drinkList', JSON.stringify(Object.values(drinks)));
+        const user = await Auth.currentAuthenticatedUser();
+        const userId = user.attributes.sub;
+
+        const cellar = {
+          userId: userId,
+          Drinks: Object.values(drinks),
+          triedDrinkIds: [],
+        };
+
+        try {
+          const existingCellar = await API.graphql({
+            query: `query GetCellar($userId: String!) {
+              getCellar(userId: $userId) {
+                userId
+                triedDrinkIds
+              }
+            }`,
+            variables: { userId: userId },
+            authMode: 'AMAZON_COGNITO_USER_POOLS',
+          });
+
+          if (existingCellar.data.getCellar) {
+            cellar.triedDrinkIds = existingCellar.data.getCellar.triedDrinkIds;
+            await API.graphql({
+              query: `mutation UpdateCellar($input: UpdateCellarInput!) {
+                updateCellar(input: $input) {
+                  userId
+                }
+              }`,
+              variables: { input: cellar },
+              authMode: 'AMAZON_COGNITO_USER_POOLS',
+            });
+          } else {
+            await API.graphql({
+              query: `mutation CreateCellar($input: CreateCellarInput!) {
+                createCellar(input: $input) {
+                  userId
+                }
+              }`,
+              variables: { input: cellar },
+              authMode: 'AMAZON_COGNITO_USER_POOLS',
+            });
+          }
+        } catch (error) {
+          console.error('Error storing data in backend:', error);
+        }
+
         setLoading(false);
         fetchDrinks();
       };
