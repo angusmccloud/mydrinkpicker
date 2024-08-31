@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 import { formatDate } from '../../utils/dateUtils';
@@ -7,12 +7,16 @@ import getDrinks from '../../services/getDrinks';
 import DrinkList from '../../containers/DrinkList/DrinkList';
 import TextField from '@mui/material/TextField';
 import { useTheme } from '@mui/material';
+import { generateClient } from 'aws-amplify/data';
+import { AuthContext } from '../../contexts';
+import { type Schema } from '@/amplify/data/resource';
 
 const ManageDrinksPage = () => {
   const [drinks, setDrinks] = useState([]);
   const [displayedDrinks, setDisplayedDrinks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerms, setSearchTerms] = useState('');
+  const { user } = useContext(AuthContext);
 
   const theme = useTheme();
 
@@ -40,12 +44,12 @@ const ManageDrinksPage = () => {
     applyDisplayFilter(searchWords);
   };
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
       setLoading(true);
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
@@ -80,7 +84,30 @@ const ManageDrinksPage = () => {
           drinks[drinkId].bottles.push(bottle);
         });
 
-        localStorage.setItem('drinkList', JSON.stringify(Object.values(drinks)));
+        const client = generateClient<Schema>();
+        const cellar = {
+          userId: user.congnitoId,
+          drinks: Object.values(drinks),
+          triedDrinkIds: [],
+        };
+
+        const { data: existingCellar } = await client.models.Cellar.list({
+          filter: {
+            userId: {
+              eq: user.congnitoId,
+            },
+          },
+        });
+
+        if (existingCellar.length > 0) {
+          const { data: updatedCellar, errors } = await client.models.Cellar.update({
+            id: existingCellar[0].id,
+            ...cellar,
+          });
+        } else {
+          const { data: newCellar, errors } = await client.models.Cellar.create(cellar);
+        }
+
         setLoading(false);
         fetchDrinks();
       };
