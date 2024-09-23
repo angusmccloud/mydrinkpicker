@@ -1,17 +1,17 @@
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
-import { type Schema } from '@/amplify/data/resource';
 
 const getDrinks = async () => {
-  const client = generateClient<Schema>();
+  const client = generateClient();
   const { userId } = await getCurrentUser();
+  // return [];
 
   const { data: cellars, errors } = await client.models.Cellar.list({
     filter: {
       userId: {
         eq: userId
       }
-    }
+    },
   });
 
   if (errors) {
@@ -24,7 +24,10 @@ const getDrinks = async () => {
   }
 
   const cellar = cellars[0];
-  const drinks = cellar.Drinks.map(drink => {
+  const triedDrinkIds = cellar.triedDrinkIds;
+  const drinks = cellar.drinks.map(rawDrink => {
+    const drink = JSON.parse(rawDrink);
+    // console.log('-- drink --', drink);
     const nonNullPrices = drink.bottles.map(bottle => bottle.price).filter(price => price !== null);
     const averagePrice = nonNullPrices.reduce((acc, price) => acc + price, 0) / nonNullPrices.length;
 
@@ -38,7 +41,7 @@ const getDrinks = async () => {
       bottleStatus = 'Open';
     }
 
-    const hasTried = cellar.triedDrinkIds.includes(drink.drinkId);
+    const hasTried = triedDrinkIds.includes(drink.drinkId);
 
     return {
       ...drink,
@@ -48,7 +51,11 @@ const getDrinks = async () => {
     };
   });
 
-  return drinks;
+  return {
+    drinks: drinks,
+    cellarId: cellar.id,
+    triedDrinkIds: triedDrinkIds
+  };
 }
 
 export default getDrinks;

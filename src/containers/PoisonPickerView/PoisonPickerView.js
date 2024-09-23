@@ -3,8 +3,9 @@ import SelectInput from '../../components/SelectInput/SelectInput';
 import Button from '../../components/Button/Button';
 import Slider from '../../components/Slider/Slider';
 import Typography from '../../components/Typography/Typography';
+import CircularProgress from '../../components/CircularProgress/CircularProgress';
 
-const PoisonPickerView = ({ drinks }) => {
+const PoisonPickerView = ({ drinks, loading }) => {
   const [bottleStatus, setBottleStatus] = useState('No Preference');
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [strengthRange, setStrengthRange] = useState([0, 100]);
@@ -95,56 +96,73 @@ const PoisonPickerView = ({ drinks }) => {
   return (
     <div>
       <Typography variant="h6">Pick a Poison</Typography>
-      <SelectInput
-        label="Bottle Status"
-        value={bottleStatus}
-        setValue={setBottleStatus}
-        options={[
-          { value: 'No Preference', label: 'No Preference' },
-          { value: 'Open', label: 'Open' },
-          { value: 'Closed', label: 'Closed' }
-        ]}
-      />
-      <SelectInput
-        label="Types"
-        value={selectedTypes}
-        setValue={setSelectedTypes}
-        options={Array.from(new Set(possibleDrinks.map(drink => drink.type))).map(type => ({ value: type, label: type }))}
-        multiple
-      />
-      <Typography gutterBottom>Strength Range</Typography>
-      <Slider
-        value={strengthRange}
-        onChange={(e, newValue) => setStrengthRange(newValue)}
-        valueLabelDisplay="auto"
-        valueLabelFormat={strengthValueLabelFormat}
-        step={100 / ( sliderOptions.strength.max - sliderOptions.strength.min )}
-        min={sliderOptions.strength.min}
-        max={sliderOptions.strength.max}
-      />
-      <Typography gutterBottom>Age Range</Typography>
-      <Slider
-        value={ageRange}
-        onChange={(e, newValue) => setAgeRange(newValue)}
-        valueLabelDisplay="auto"
-        valueLabelFormat={ageValueLabelFormat}
-        step={100 / ( sliderOptions.age.max - sliderOptions.age.min )}
-        min={sliderOptions.age.min}
-        max={sliderOptions.age.max}
-      />
-      <Typography gutterBottom>Price Range</Typography>
-      <Slider
-        value={priceRange}
-        onChange={(e, newValue) => setPriceRange(newValue)}
-        valueLabelDisplay="auto"
-        valueLabelFormat={priceValueLabelFormat}
-        step={100 / ( sliderOptions.price.max - sliderOptions.price.min )}
-        min={sliderOptions.price.min}
-        max={sliderOptions.price.max}
-      />
-      <Button onClick={handlePick} disabled={filteredDrinks.length === 0}>
-        Pick One
-      </Button>
+      {loading ? (
+        <div style={{paddingTop: 20, textAlign: 'center'}}>
+          <CircularProgress />
+          <Typography>Loading drinks...</Typography>
+        </div>
+      ) : (
+        <>
+          {drinks.length === 0 ? (
+            <div style={{paddingTop: 20, textAlign: 'center'}}>
+              <Typography>No drinks available, upload your drink list to get started</Typography>
+            </div>
+          ) : (
+            <>
+              <SelectInput
+                label="Bottle Status"
+                value={bottleStatus}
+                setValue={setBottleStatus}
+                options={[
+                  { value: 'No Preference', label: 'No Preference' },
+                  { value: 'Open', label: 'Open' },
+                  { value: 'Closed', label: 'Closed' }
+                ]}
+              />
+              <SelectInput
+                label="Types"
+                value={selectedTypes}
+                setValue={setSelectedTypes}
+                options={Array.from(new Set(possibleDrinks.map(drink => drink.type))).map(type => ({ value: type, label: type }))}
+                multiple
+              />
+              <Typography gutterBottom>Strength Range</Typography>
+              <Slider
+                value={strengthRange}
+                onChange={(e, newValue) => setStrengthRange(newValue)}
+                valueLabelDisplay="auto"
+                valueLabelFormat={strengthValueLabelFormat}
+                step={100 / ( sliderOptions.strength.max - sliderOptions.strength.min )}
+                min={sliderOptions.strength.min}
+                max={sliderOptions.strength.max}
+              />
+              <Typography gutterBottom>Age Range</Typography>
+              <Slider
+                value={ageRange}
+                onChange={(e, newValue) => setAgeRange(newValue)}
+                valueLabelDisplay="auto"
+                valueLabelFormat={ageValueLabelFormat}
+                step={100 / ( sliderOptions.age.max - sliderOptions.age.min )}
+                min={sliderOptions.age.min}
+                max={sliderOptions.age.max}
+              />
+              <Typography gutterBottom>Price Range</Typography>
+              <Slider
+                value={priceRange}
+                onChange={(e, newValue) => setPriceRange(newValue)}
+                valueLabelDisplay="auto"
+                valueLabelFormat={priceValueLabelFormat}
+                step={100 / ( sliderOptions.price.max - sliderOptions.price.min )}
+                min={sliderOptions.price.min}
+                max={sliderOptions.price.max}
+              />
+              <Button onClick={handlePick} disabled={filteredDrinks.length === 0}>
+                Pick One
+              </Button>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 };

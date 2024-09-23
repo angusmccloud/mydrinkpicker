@@ -9,32 +9,36 @@ import TextField from '@mui/material/TextField';
 import { useTheme } from '@mui/material';
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
-import { type Schema } from '@/amplify/data/resource';
 
 const ManageDrinksPage = () => {
   const [drinks, setDrinks] = useState([]);
   const [displayedDrinks, setDisplayedDrinks] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [searchTerms, setSearchTerms] = useState('');
 
   const theme = useTheme();
 
   const fetchDrinks = async () => {
+    setLoading(true);
     const drinksData = await getDrinks();
-    setDrinks(drinksData);
-    applyDisplayFilter(searchTerms);
+    setDrinks(drinksData.drinks);
+    applyDisplayFilter(searchTerms, drinksData.drinks);
   };
 
-  const applyDisplayFilter = (searchWords) => {
+  const applyDisplayFilter = (searchWords, drinksData) => {
+    const filterDrinks = drinksData || drinks;
     if(searchWords.length === 0) {
-      setDisplayedDrinks(drinks);
+      setDisplayedDrinks(filterDrinks);
+      setLoading(false);
     } else {
       const searchWordsArray = searchWords.split(' ');
-      const filteredDrinks = drinks.filter((drink) => {
+      const filteredDrinks = filterDrinks.filter((drink) => {
         const drinkString = JSON.stringify(drink).toLowerCase();
         return searchWordsArray.every((word) => drinkString.includes(word));
       });
       setDisplayedDrinks(filteredDrinks);
+      setLoading(false);
     }
   }
 
@@ -46,7 +50,7 @@ const ManageDrinksPage = () => {
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
-      setLoading(true);
+      setUploading(true);
       const reader = new FileReader();
       reader.onload = async (e) => {
         const data = new Uint8Array(e.target.result);
@@ -54,6 +58,7 @@ const ManageDrinksPage = () => {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json(worksheet);
+        // console.log('-- json --', json);
 
         const drinks = {};
         json.forEach((row) => {
@@ -82,10 +87,16 @@ const ManageDrinksPage = () => {
 
           drinks[drinkId].bottles.push(bottle);
         });
+        // console.log('-- drinks --', drinks);
+        const drinksArray = Object.values(drinks).map(value => JSON.stringify(value));
+        // console.log('-- drinksArray --', drinksArray);
 
-        const client = generateClient<Schema>();
-        const { username, userId } = await getCurrentUser();
+        const client = generateClient({authMode: 'userPool'});
+        const { userId } = await getCurrentUser();
+        // console.log('-- userId --', userId);
 
+
+        // const existingCellars = await client.models.Cellar.list();
         const existingCellar = await client.models.Cellar.list({
           filter: {
             userId: {
@@ -94,23 +105,27 @@ const ManageDrinksPage = () => {
           }
         });
 
-        if (existingCellar.data.length > 0) {
+        // console.log('-- existingCellar --', existingCellar);
+
+        if (existingCellar?.data?.length > 0) {
+          console.log('-- Has an existing cellar, update --');
           const cellar = existingCellar.data[0];
           const updatedCellar = {
             ...cellar,
-            Drinks: Object.values(drinks),
+            drinks: drinksArray,
           };
           await client.models.Cellar.update(updatedCellar);
         } else {
+          console.log('-- No existing cellar, create --');
           const newCellar = {
             userId: userId,
-            Drinks: Object.values(drinks),
+            drinks: drinksArray,
             triedDrinkIds: [],
           };
           await client.models.Cellar.create(newCellar);
         }
 
-        setLoading(false);
+        setUploading(false);
         fetchDrinks();
       };
       reader.readAsArrayBuffer(file);
@@ -121,14 +136,14 @@ const ManageDrinksPage = () => {
     return (
       <div style={{paddingBottom: 10, borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: theme.palette.primary.main}}>
         <p>Replace Your Full Drink List from Excel:</p>
-        <input type="file" accept=".xlsx" onChange={handleFileUpload} />
+        <input type="file" accept=".xlsx" onChange={handleFileUpload} disabled={uploading} />
         <div style={{marginTop: 10}}>
           <TextField 
             id="searchDrinks"
             label="Search Your Drinks"
             value={searchTerms}
             onChange={(e) => handleSearchChange(e.target.value)}
-            disabled={drinks.length === 0}
+            disabled={drinks.length === 0 || loading || uploading}
           />          
         </div>
       </div>
@@ -142,7 +157,7 @@ const ManageDrinksPage = () => {
   return (
     <PageContent pageName="Manage Drinks" pageKey="manage-drinks">
       {renderHeader()}
-      <DrinkList drinks={displayedDrinks} renderHeader={renderHeader} />
+      <DrinkList drinks={displayedDrinks} loading={loading} uploading={uploading} />
     </PageContent>
   );
 };
