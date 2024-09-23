@@ -1,6 +1,7 @@
 export { default as Avatar } from './Avatar/Avatar';
 export { default as BaseModal } from './BaseModal/BaseModal';
 export { default as Button } from './Button/Button';
+export { default as CircularProgress } from './CircularProgress/CircularProgress';
 export { default as ConditionalWrapper } from './ConditionalWrapper/ConditionalWrapper';
 export { default as DatePicker } from './DatePicker/DatePicker';
 export { default as Divider } from './Divider/Divider';
