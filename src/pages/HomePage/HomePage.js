@@ -7,11 +7,13 @@ import PoisonPickerView from '../../containers/PoisonPickerView/PoisonPickerView
 const HomePage = () => {
   const { user } = useContext(AuthContext);
   const [drinks, setDrinks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDrinks = async () => {
       const drinksData = await getDrinks();
-      setDrinks(drinksData);
+      setDrinks(drinksData.drinks);
+      setLoading(false);
       // console.log(drinksData);
     };
 
@@ -23,7 +25,7 @@ const HomePage = () => {
       pageName=''
       pageKey='home'
     >
-      <PoisonPickerView drinks={drinks} />
+      <PoisonPickerView drinks={drinks} loading={loading} />
     </PageContent>
   );
 }

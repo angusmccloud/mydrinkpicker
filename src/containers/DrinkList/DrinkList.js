@@ -1,26 +1,17 @@
 import React from 'react';
-// import { FixedSizeList as List } from "react-window";
 import { VariableSizeList as List } from "react-window";
 import AutoSizer from 'react-virtualized-auto-sizer';
 import DrinkListItem from '../DrinkListItem/DrinkListItem';
-import { Typography } from '../../components';
+import { Typography, CircularProgress } from '../../components';
 
-const DrinkList = ({ drinks, renderHeader }) => {
-  const rowRenderer = ({ key, index, style }) => {
-    // if(index === 0) {
-    //   return (
-    //     <>
-    //       {renderHeader()}
-    //     </>
-    //   );
-    // } else {
-      const drink = drinks[index];
-      return (
-        <div drink={key} style={style}>
-          <DrinkListItem drink={drink} />
-        </div>
-      );
-    // }
+const DrinkList = ({ drinks, loading, uploading }) => {
+  const rowRenderer = ({ index, style }) => {
+    const drink = drinks[index];
+    return (
+      <div drink={drink.drinkId} style={style}>
+        <DrinkListItem drink={drink} />
+      </div>
+    );
   };
 
   const getItemSize = index => {
@@ -28,32 +19,47 @@ const DrinkList = ({ drinks, renderHeader }) => {
     return 90;
   };
 
+  if (loading) {
+    return (
+      <div style={{paddingTop: 20, textAlign: 'center'}}>
+        <CircularProgress />
+        <Typography>Loading drinks...</Typography>
+      </div>
+    );
+  }
+
+  if (uploading) {
+    return (
+      <div style={{paddingTop: 20, textAlign: 'center'}}>
+        <CircularProgress />
+        <Typography>Uploading drinks...</Typography>
+      </div>
+    );
+  }
+
   if (drinks.length === 0) {
     return (
-      <>
-        {/* {renderHeader()} */}
-        <Typography>No drinks available</Typography>
-      </>
+      <div style={{paddingTop: 20, textAlign: 'center'}}>
+        <Typography>No drinks available, upload your drink list to get started</Typography>
+      </div>
     );
   }
 
   return (
-    <>
-      <AutoSizer>
-        {({ height, width }) => (
-          <List
-            className="List"
-            height={height}
-            width={width}
-            itemCount={drinks.length}
-            itemSize={getItemSize}
-            // itemSize={85}
-          >
-            {rowRenderer}
-          </List>
-        )}
-      </AutoSizer>
-    </>
+    <AutoSizer>
+      {({ height, width }) => (
+        <List
+          className="List"
+          height={height}
+          width={width}
+          itemCount={drinks.length}
+          itemSize={getItemSize}
+          // itemSize={85}
+        >
+          {rowRenderer}
+        </List>
+      )}
+    </AutoSizer>
   );
 };
 

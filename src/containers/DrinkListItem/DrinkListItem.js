@@ -5,12 +5,12 @@ import { formatCurrency } from '../../utils';
 import { Liquor } from '@mui/icons-material';
 
 const DrinkListItem = ({ drink }) => {
-  const { brand, name, bottlingSerie, type, statedAge, strength, imageUrl, bottleStatus, bottles, price } = drink;
+  const { drinkId, brand, name, bottlingSerie, type, statedAge, strength, imageUrl, bottleStatus, bottles, price } = drink;
 
   const title = `${brand} ${name}${bottlingSerie ? ` (${bottlingSerie})` : ''}`;
 
   return (
-    <ListItem sx={{paddingLeft: 0}}>
+    <ListItem sx={{paddingLeft: 0}} key={drinkId}>
       <ListItemAvatar sx={{marginRight: '10px'}}>
         {imageUrl ? (
           // <Avatar sx={{ height: 75, width: 75 }} variant={'rounded'} src={imageUrl} />
@@ -24,7 +24,7 @@ const DrinkListItem = ({ drink }) => {
       <ListItemText
         primary={title}
         secondary={
-          <div>
+          <>
             <Typography component="span" variant="body2" color="textPrimary">
               {type}
             </Typography>
@@ -52,10 +52,11 @@ const DrinkListItem = ({ drink }) => {
                 </Typography>
               </>
             )}
-            <Typography component="div" variant="body2" color="textPrimary">
+            <br/>
+            <Typography component="span" variant="body2" color="textPrimary">
               {bottleStatus} - {bottles.length} bottle{bottles.length > 1 ? 's' : ''}
             </Typography>
-          </div>
+          </>
         }
       />
     </ListItem>
