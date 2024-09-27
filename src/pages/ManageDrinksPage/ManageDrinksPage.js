@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 import { formatDate } from '../../utils/dateUtils';
 import PageContent from '../../containers/PageContent/PageContent';
-import getDrinks from '../../services/getDrinks';
+import { createOrReplaceCellar, getCellar } from '../../services/cellerServices';
 import DrinkList from '../../containers/DrinkList/DrinkList';
 import TextField from '@mui/material/TextField';
 import { useTheme } from '@mui/material';
@@ -11,6 +11,7 @@ import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 
 const ManageDrinksPage = () => {
+  const [cellarId, setCellarId] = useState('');
   const [drinks, setDrinks] = useState([]);
   const [displayedDrinks, setDisplayedDrinks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -19,11 +20,16 @@ const ManageDrinksPage = () => {
 
   const theme = useTheme();
 
+  const handleFetchedDrinks = (drinksData) => {
+    setDrinks(drinksData.drinks);
+    setCellarId(drinksData.cellarId);
+    applyDisplayFilter(searchTerms, drinksData.drinks);
+  }
+
   const fetchDrinks = async () => {
     setLoading(true);
-    const drinksData = await getDrinks();
-    setDrinks(drinksData.drinks);
-    applyDisplayFilter(searchTerms, drinksData.drinks);
+    const drinksData = await getCellar();
+    handleFetchedDrinks(drinksData);
   };
 
   const applyDisplayFilter = (searchWords, drinksData) => {
@@ -68,8 +74,8 @@ const ManageDrinksPage = () => {
               drinkId: drinkId,
               brand: row['Brand'],
               name: row['Name'],
-              bottlingSerie: row['Bottling serie'] || '',
-              statedAge: row['Stated Age'] || '',
+              bottlingSerie: row['Bottling serie'] || null,
+              statedAge: row['Stated Age'] || null,
               strength: row['Strength'],
               type: row['List'],
               imageUrl: row['Photo'] || '',
@@ -91,42 +97,10 @@ const ManageDrinksPage = () => {
         const drinksArray = Object.values(drinks).map(value => JSON.stringify(value));
         // console.log('-- drinksArray --', drinksArray);
 
-        const client = generateClient({authMode: 'userPool'});
-        const { userId } = await getCurrentUser();
-        // console.log('-- userId --', userId);
-
-
-        // const existingCellars = await client.models.Cellar.list();
-        const existingCellar = await client.models.Cellar.list({
-          filter: {
-            userId: {
-              eq: userId
-            }
-          }
-        });
-
-        // console.log('-- existingCellar --', existingCellar);
-
-        if (existingCellar?.data?.length > 0) {
-          console.log('-- Has an existing cellar, update --');
-          const cellar = existingCellar.data[0];
-          const updatedCellar = {
-            ...cellar,
-            drinks: drinksArray,
-          };
-          await client.models.Cellar.update(updatedCellar);
-        } else {
-          console.log('-- No existing cellar, create --');
-          const newCellar = {
-            userId: userId,
-            drinks: drinksArray,
-            triedDrinkIds: [],
-          };
-          await client.models.Cellar.create(newCellar);
-        }
+        const drinksData = createOrReplaceCellar(drinksArray);
+        handleFetchedDrinks(drinksData);
 
         setUploading(false);
-        fetchDrinks();
       };
       reader.readAsArrayBuffer(file);
     }

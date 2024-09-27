@@ -2,11 +2,12 @@ import React from 'react';
 import { ListItem, ListItemAvatar, ListItemText, Avatar } from '@mui/material';
 import { Typography } from '../../components';
 import { formatCurrency } from '../../utils';
-import { Liquor } from '@mui/icons-material';
+import { Liquor, CheckCircle } from '@mui/icons-material';
+
 
 const DrinkListItem = ({ drink }) => {
-  const { drinkId, brand, name, bottlingSerie, type, statedAge, strength, imageUrl, bottleStatus, bottles, price } = drink;
-
+  const { drinkId, brand, name, bottlingSerie, type, statedAge, strength, imageUrl, bottleStatus, bottles, price, hasTried } = drink;
+  
   const title = `${brand} ${name}${bottlingSerie ? ` (${bottlingSerie})` : ''}`;
 
   return (
@@ -19,6 +20,11 @@ const DrinkListItem = ({ drink }) => {
           <Avatar sx={{ height: 75, width: 75 }}>
             <Liquor fontSize={'large'} />
           </Avatar>
+        )}
+        {hasTried && (
+          <div style={{position: 'absolute', top: 5, left: 5}}>
+            <CheckCircle fontSize={'small'} color={'primary'} />
+          </div>
         )}
       </ListItemAvatar>
       <ListItemText
@@ -44,7 +50,7 @@ const DrinkListItem = ({ drink }) => {
                 </Typography>
               </>
             )}
-            {price > 0 && (
+            {(price !== null && price > 0) && (
               <>
                 {' - '}
                 <Typography component="span" variant="body2" color="textPrimary">

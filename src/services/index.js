@@ -1,1 +1,1 @@
-export { default as getDrinks } from './getDrinks';
+export { createOrReplaceCellar, getCellar } from './cellarServices';

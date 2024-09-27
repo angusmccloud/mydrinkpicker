@@ -8,9 +8,7 @@ const DrinkList = ({ drinks, loading, uploading }) => {
   const rowRenderer = ({ index, style }) => {
     const drink = drinks[index];
     return (
-      <div drink={drink.drinkId} style={style}>
-        <DrinkListItem drink={drink} />
-      </div>
+      <DrinkListItem drink={drink} key={drink.drinkId} />
     );
   };
 

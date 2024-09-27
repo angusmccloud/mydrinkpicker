@@ -10,7 +10,7 @@ const PoisonPickerView = ({ drinks, loading }) => {
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [strengthRange, setStrengthRange] = useState([0, 100]);
   const [ageRange, setAgeRange] = useState([0, 100]);
-  const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [priceRange, setPriceRange] = useState([0, 100]);
   const [filteredDrinks, setFilteredDrinks] = useState([]);
   const [possibleDrinks, setPossibleDrinks] = useState([]);
   const [sliderOptions, setSliderOptions] = useState({
@@ -55,43 +55,65 @@ const PoisonPickerView = ({ drinks, loading }) => {
     alert(`You picked: ${selectedDrink.name}`);
   };
 
+  // Set slider options based on *complete* drink list (Open or Closed)
   useEffect(() => {
     // Remove Sample and Empty drinks
     const possibleDrinks = drinks.filter(drink => drink.bottleStatus === 'Open' || drink.bottleStatus === 'Closed');
     setPossibleDrinks(possibleDrinks);
 
     // Set slider options
-    const strengthMin = Math.min(...possibleDrinks.map(drink => drink.strength || 0));
-    const strengthMax = Math.max(...possibleDrinks.map(drink => drink.strength));
-    const ageMin = Math.min(...possibleDrinks.map(drink => drink.statedAge || 0));
-    const ageMax = Math.max(...possibleDrinks.map(drink => drink.statedAge || 0));
-    const priceMin = Math.min(...possibleDrinks.map(drink => drink.price || 0));
-    const priceMax = Math.max(...possibleDrinks.map(drink => drink.price || 0));
+    const strengthMin = Math.floor(Math.min(...possibleDrinks.map(drink => drink.strength || 0)));
+    const strengthMax = Math.ceil(Math.max(...possibleDrinks.map(drink => drink.strength)));
+    const ageMin = Math.floor(Math.min(...possibleDrinks.map(drink => drink.statedAge || 0)));
+    const ageMax = Math.ceil(Math.max(...possibleDrinks.map(drink => drink.statedAge || 0)));
+    const priceMin = Math.floor(Math.min(...possibleDrinks.map(drink => drink.price || 0)));
+    const priceMax = Math.ceil(Math.max(...possibleDrinks.map(drink => drink.price || 0)));
     // console.log(strengthMin, strengthMax, ageMin, ageMax, priceMin, priceMax);
     setSliderOptions({ strength: { min: strengthMin, max: strengthMax }, age: { min: ageMin, max: ageMax }, price: { min: priceMin, max: priceMax } });
   }, [drinks]);
 
+  // Filter drinks based on Selected Criteria
   useEffect(() => {
     const filterDrinks = () => {
+      console.log('-- sliderOptions --', sliderOptions);
       let filtered = [...possibleDrinks];
+      console.log('-- Filtered at Initialization --', filtered.length);
 
       if (bottleStatus !== 'No Preference') {
         filtered = filtered.filter(drink => drink.bottleStatus === bottleStatus);
       }
+      console.log('-- Filtered at Bottle Status --', filtered.length);
 
       if (selectedTypes.length > 0) {
         filtered = filtered.filter(drink => selectedTypes.includes(drink.type));
       }
+      console.log('-- Filtered at Type --', filtered.length);
 
-      filtered = filtered.filter(drink => drink.strength >= strengthRange[0] && drink.strength <= strengthRange[1]);
-      filtered = filtered.filter(drink => (drink.statedAge === null || (drink.statedAge >= ageRange[0] && drink.statedAge <= ageRange[1])));
-      filtered = filtered.filter(drink => (drink.price === null || (drink.price >= priceRange[0] && drink.price <= priceRange[1])));
+      
+      // Scale the 0-100 value based on the actual values stored in sliderOptions
+      const scaledStrengthRange = strengthRange.map(value => (value / 100) * (sliderOptions.strength.max - sliderOptions.strength.min) + sliderOptions.strength.min);
+      const scaledAgeRange = ageRange.map(value => (value / 100) * (sliderOptions.age.max - sliderOptions.age.min) + sliderOptions.age.min);
+      const scaledPriceRange = priceRange.map(value => (value / 100) * (sliderOptions.price.max - sliderOptions.price.min) + sliderOptions.price.min);
+
+      console.log(scaledStrengthRange);
+      filtered = filtered.filter(drink => (drink.strength === null || (drink.strength >= scaledStrengthRange[0] && drink.strength <= scaledStrengthRange[1])));
+      console.log('-- Filtered at Strength --', filtered.length);
+      console.log(scaledAgeRange);
+      filtered = filtered.filter(drink => (drink.statedAge === null || (drink.statedAge >= scaledAgeRange[0] && drink.statedAge <= scaledAgeRange[1])));
+      console.log('-- Filtered at Stated Age --', filtered.length);
+      console.log(scaledPriceRange);
+      filtered = filtered.filter(drink => (drink.price === null || (drink.price >= scaledPriceRange[0] && drink.price <= scaledPriceRange[1])));
+      console.log('-- Filtered at Price --', filtered.length);
+
+      // List of items in possibleDrinks that are NOT in filtered
+      const removed = possibleDrinks.filter(drink => !filtered.includes(drink));
+      console.log('-- Removed --', removed);
 
       setFilteredDrinks(filtered);
     };
 
     filterDrinks();
-  }, [bottleStatus, selectedTypes, strengthRange, ageRange, priceRange, possibleDrinks]);
+  }, [bottleStatus, selectedTypes, strengthRange, ageRange, priceRange, possibleDrinks, sliderOptions]);
 
   return (
     <div>
@@ -159,6 +181,12 @@ const PoisonPickerView = ({ drinks, loading }) => {
               <Button onClick={handlePick} disabled={filteredDrinks.length === 0}>
                 Pick One
               </Button>
+              <Typography>
+                Total Number of Drinks (Open or Closed): {possibleDrinks.length}
+              </Typography>
+              <Typography>
+                Number of Drinks Matching Filters: {filteredDrinks.length}
+              </Typography>
             </>
           )}
         </>
