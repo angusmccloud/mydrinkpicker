@@ -152,7 +152,6 @@ const PoisonPickerView = ({ drinks, loading }) => {
 
   return (
     <div>
-      <Typography variant="h6">Pick a Poison</Typography>
       {loading ? (
         <div style={{paddingTop: 20, textAlign: 'center'}}>
           <CircularProgress />

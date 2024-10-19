@@ -20,7 +20,7 @@ const HomePage = () => {
 
   return (
     <PageContent
-      pageName=''
+      pageName='Pick a Poison'
       pageKey='home'
     >
       <PoisonPickerView drinks={drinks} loading={loading} />

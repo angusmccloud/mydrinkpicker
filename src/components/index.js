@@ -12,4 +12,5 @@ export { default as SelectInput } from './SelectInput/SelectInput';
 export { default as Slider } from './Slider/Slider';
 export { default as Switch } from './Switch/Switch';
 export { default as TextField } from './TextField/TextField';
+export { default as Tooltip } from './Tooltip/Tooltip';
 export { default as Typography } from './Typography/Typography';

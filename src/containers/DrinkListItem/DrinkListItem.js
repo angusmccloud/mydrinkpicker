@@ -5,13 +5,13 @@ import { formatCurrency } from '../../utils';
 import { Liquor, CheckCircle } from '@mui/icons-material';
 
 
-const DrinkListItem = ({ drink }) => {
+const DrinkListItem = ({ drink, style }) => {
   const { drinkId, brand, name, bottlingSerie, type, statedAge, strength, imageUrl, bottleStatus, bottles, price, hasTried } = drink;
   
   const title = `${brand} ${name}${bottlingSerie ? ` (${bottlingSerie})` : ''}`;
 
   return (
-    <ListItem sx={{paddingLeft: 0}} key={drinkId}>
+    <ListItem sx={{paddingLeft: 0}} key={drinkId} style={style}>
       <ListItemAvatar sx={{marginRight: '10px'}}>
         {imageUrl ? (
           // <Avatar sx={{ height: 75, width: 75 }} variant={'rounded'} src={imageUrl} />

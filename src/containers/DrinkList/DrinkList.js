@@ -8,7 +8,7 @@ const DrinkList = ({ drinks, loading, uploading }) => {
   const rowRenderer = ({ index, style }) => {
     const drink = drinks[index];
     return (
-      <DrinkListItem drink={drink} key={drink.drinkId} />
+      <DrinkListItem drink={drink} key={drink.drinkId} style={style} />
     );
   };
 
@@ -52,7 +52,7 @@ const DrinkList = ({ drinks, loading, uploading }) => {
           width={width}
           itemCount={drinks.length}
           itemSize={getItemSize}
-          // itemSize={85}
+          // itemSize={90}
         >
           {rowRenderer}
         </List>

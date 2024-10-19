@@ -5,10 +5,14 @@ import { formatDate } from '../../utils/dateUtils';
 import PageContent from '../../containers/PageContent/PageContent';
 import { createOrReplaceCellar, getCellar } from '../../services/cellerServices';
 import DrinkList from '../../containers/DrinkList/DrinkList';
-import TextField from '@mui/material/TextField';
+import IconButton from '../../components/IconButton/IconButton';
+import TextField from '../../components/TextField/TextField';
+import Tooltip from '../../components/Tooltip/Tooltip';
+import Typography from '../../components/Typography/Typography';
+import {
+  Info,
+} from '@mui/icons-material';
 import { useTheme } from '@mui/material';
-// import { generateClient } from 'aws-amplify/data';
-// import { getCurrentUser } from 'aws-amplify/auth';
 
 const ManageDrinksPage = () => {
   // const [cellarId, setCellarId] = useState('');
@@ -110,8 +114,32 @@ const ManageDrinksPage = () => {
   const renderHeader = () => {
     return (
       <div style={{paddingBottom: 10, borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: theme.palette.primary.main}}>
-        <p>Replace Your Full Drink List from Excel:</p>
-        <input type="file" accept=".xlsx" onChange={handleFileUpload} disabled={uploading} />
+        <Typography>Replace Your Full Drink List from Excel</Typography>
+        {/* <Tooltip title={
+          <React.Fragment>
+            <Typography color="inherit" variant={'subtitle1'}>Import a Whiskey Base Export.</Typography>
+            <Typography color="inherit" variant={'subtitle1'}>Expects the Following Columns:</Typography>
+            <ul>
+              <li>ID</li>
+              <li>Brand</li>
+              <li>Name</li>
+              <li>Bottling serie (Optional)</li>
+              <li>Stated Age (Optional)</li>
+              <li>Strength</li>
+              <li>List</li>
+              <li>Photo (Optional)</li>
+              <li>Bottle status</li>
+              <li>Size</li>
+              <li>Price Paid (Optional)</li>
+              <li>Added on</li>
+            </ul>
+          </React.Fragment>
+        }>
+          <IconButton color={'primary'}>
+            <Info />
+          </IconButton>
+        </Tooltip> */}
+        <input type="file" accept=".xlsx" onChange={handleFileUpload} disabled={uploading} style={{marginTop: '10px'}} />
         <div style={{marginTop: 10}}>
           <TextField 
             id="searchDrinks"

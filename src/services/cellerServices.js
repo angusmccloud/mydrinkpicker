@@ -95,7 +95,7 @@ const createOrReplaceCellar = async (drinksList) => {
     }
 
     if (existingCellar?.length > 0) {
-      // console.log('-- Existing Cellar, Update Time --');;
+      // console.log('-- Existing Cellar, Update Time --');
       const cellar = existingCellar[0];
       const updatedCellar = {
         id: cellar.id,
@@ -125,6 +125,8 @@ const createOrReplaceCellar = async (drinksList) => {
         newCellar,
         { authMode: 'userPool' }
       );
+
+      // console.log('-- newDrinksData --', newDrinksData);
 
       if (errors) {
         console.error('-- Error creating Cellar --', errors);
