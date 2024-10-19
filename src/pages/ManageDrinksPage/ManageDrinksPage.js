@@ -7,11 +7,11 @@ import { createOrReplaceCellar, getCellar } from '../../services/cellerServices'
 import DrinkList from '../../containers/DrinkList/DrinkList';
 import TextField from '@mui/material/TextField';
 import { useTheme } from '@mui/material';
-import { generateClient } from 'aws-amplify/data';
-import { getCurrentUser } from 'aws-amplify/auth';
+// import { generateClient } from 'aws-amplify/data';
+// import { getCurrentUser } from 'aws-amplify/auth';
 
 const ManageDrinksPage = () => {
-  const [cellarId, setCellarId] = useState('');
+  // const [cellarId, setCellarId] = useState('');
   const [drinks, setDrinks] = useState([]);
   const [displayedDrinks, setDisplayedDrinks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ const ManageDrinksPage = () => {
 
   const handleFetchedDrinks = (drinksData) => {
     setDrinks(drinksData.drinks);
-    setCellarId(drinksData.cellarId);
+    // setCellarId(drinksData.cellarId);
     applyDisplayFilter(searchTerms, drinksData.drinks);
   }
 
@@ -34,11 +34,12 @@ const ManageDrinksPage = () => {
 
   const applyDisplayFilter = (searchWords, drinksData) => {
     const filterDrinks = drinksData || drinks;
-    if(searchWords.length === 0) {
+    if(searchWords?.length === 0 || filterDrinks?.length === 0) {
       setDisplayedDrinks(filterDrinks);
       setLoading(false);
     } else {
-      const searchWordsArray = searchWords.split(' ');
+      const searchWordsArray = searchWords.toLowerCase().split(' ');
+      // const searchWordsArray = searchWords.toLowerCase().split(' ');
       const filteredDrinks = filterDrinks.filter((drink) => {
         const drinkString = JSON.stringify(drink).toLowerCase();
         return searchWordsArray.every((word) => drinkString.includes(word));
@@ -97,7 +98,7 @@ const ManageDrinksPage = () => {
         const drinksArray = Object.values(drinks).map(value => JSON.stringify(value));
         // console.log('-- drinksArray --', drinksArray);
 
-        const drinksData = createOrReplaceCellar(drinksArray);
+        const drinksData = await createOrReplaceCellar(drinksArray);
         handleFetchedDrinks(drinksData);
 
         setUploading(false);
@@ -117,7 +118,7 @@ const ManageDrinksPage = () => {
             label="Search Your Drinks"
             value={searchTerms}
             onChange={(e) => handleSearchChange(e.target.value)}
-            disabled={drinks.length === 0 || loading || uploading}
+            disabled={drinks?.length === 0 || loading || uploading}
           />          
         </div>
       </div>

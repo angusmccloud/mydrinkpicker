@@ -5,7 +5,11 @@ export { default as CircularProgress } from './CircularProgress/CircularProgress
 export { default as ConditionalWrapper } from './ConditionalWrapper/ConditionalWrapper';
 export { default as DatePicker } from './DatePicker/DatePicker';
 export { default as Divider } from './Divider/Divider';
+export { default as FormControlLabel } from './FormControlLabel/FormControlLabel';
+export { default as FormGroup } from './FormGroup/FormGroup';
 export { default as IconButton } from './IconButton/IconButton';
 export { default as SelectInput } from './SelectInput/SelectInput';
+export { default as Slider } from './Slider/Slider';
+export { default as Switch } from './Switch/Switch';
 export { default as TextField } from './TextField/TextField';
 export { default as Typography } from './Typography/Typography';

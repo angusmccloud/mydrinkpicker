@@ -21,3 +21,8 @@ export const formatCurrency = (amount, decimalPlaces = 2) => {
   // If decimal places is 0, simple add Comma and dollar sign
   return "$" + Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+
+// Add commas to numbers
+export const formatNumber = (num) => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}

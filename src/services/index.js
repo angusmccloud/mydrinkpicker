@@ -1,1 +1,1 @@
-export { createOrReplaceCellar, getCellar } from './cellarServices';
+export { createOrReplaceCellar, getCellar, updateTriedIds } from './cellarServices';

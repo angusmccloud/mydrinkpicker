@@ -9,12 +9,14 @@ const emptyCellar = {
 
 const formatCellar = async (cellar) => {
   try {
-    const triedDrinkIds = cellar.triedDrinkIds;
+    // Convert from Strings to Numbers
+    const triedDrinkIds = cellar.triedDrinkIds.map(id => parseInt(id));
+    // console.log('-- triedDrinkIds --', triedDrinkIds);
     const drinks = cellar.drinks.map(rawDrink => {
       const drink = JSON.parse(rawDrink);
       // console.log('-- drink --', drink);
       const nonNullPrices = drink.bottles.map(bottle => bottle.price).filter(price => price !== null);
-      const averagePrice = nonNullPrices.reduce((acc, price) => acc + price, 0) / nonNullPrices.length;
+      const averagePrice = nonNullPrices.length >= 1 ? nonNullPrices.reduce((acc, price) => acc + price, 0) / nonNullPrices.length : null;
 
       let bottleStatus = 'Closed';
       const bottleStatuses = drink.bottles.map(bottle => bottle.status.toLowerCase());
@@ -49,20 +51,20 @@ const formatCellar = async (cellar) => {
 
 const getCellar = async () => {
   const client = generateClient();
-  const { userId } = await getCurrentUser();
+  // const { userId } = await getCurrentUser();
   // console.log('-- userId --', userId);
 
-  // const { data , errors } = await client.models.Cellar.list({
-  //   query: queries.listCellars,
-  //   authMode: 'userPool',
-  // });
-
   const { errors, data } = await client.models.Cellar.list({
-      // filter: {
-      //   owner: { eq: userId }
-      // },
-      authMode: 'userPool',
-    });
+    // filter: {
+    //   owner: { eq: userId }
+    // },
+    authMode: 'userPool',
+  });
+
+  if (errors) {
+    console.error('-- Error fetching Data --', errors);
+    return emptyCellar;
+  }
 
   if (errors) {
     console.error('-- Error fetching Data --', errors);
@@ -80,17 +82,21 @@ const createOrReplaceCellar = async (drinksList) => {
   try{
     const client = generateClient();
     const { userId } = await getCurrentUser();
-    const existingCellar = await client.models.Cellar.list({
-      filter: {
-        owner: {
-          eq: userId
-        }
-      }
+    const { errors, data: existingCellar } = await client.models.Cellar.list({
+      // filter: {
+      //   owner: { eq: userId }
+      // },
+      authMode: 'userPool',
     });
 
-    if (existingCellar?.data?.length > 0) {
-      console.log('-- Existing Cellar, Update Time --');;
-      const cellar = existingCellar.data[0];
+    if (errors) {
+      console.error('-- Error fetching Data --', errors);
+      return emptyCellar;
+    }
+
+    if (existingCellar?.length > 0) {
+      // console.log('-- Existing Cellar, Update Time --');;
+      const cellar = existingCellar[0];
       const updatedCellar = {
         id: cellar.id,
         drinks: drinksList,
@@ -109,7 +115,7 @@ const createOrReplaceCellar = async (drinksList) => {
   
       return formatCellar(updatedDrinksData);
     } else {
-      console.log('-- No Existing Cellar, Create Time --');
+      // console.log('-- No Existing Cellar, Create Time --');
       const newCellar = {
         drinks: drinksList,
         triedDrinkIds: [],
@@ -120,10 +126,6 @@ const createOrReplaceCellar = async (drinksList) => {
         { authMode: 'userPool' }
       );
 
-      console.log('-- newDrinksData --', newDrinksData);
-
-      // const { errors, data: newDrinksData } = await client.models.Cellar.create(newCellar);
-  
       if (errors) {
         console.error('-- Error creating Cellar --', errors);
         return emptyCellar;
@@ -137,8 +139,60 @@ const createOrReplaceCellar = async (drinksList) => {
   }
 }
 
+// Can be passed a single drinkId, and add or remove as action
+const updateTriedIds = async (drinkId, action) => {
+  console.log('-- drinkId --', drinkId);
+  const client = generateClient();
+  // const { userId } = await getCurrentUser();
+
+  const { errors, data: existingCellar } = await client.models.Cellar.list({
+    // filter: {
+    //   owner: { eq: userId }
+    // },
+    authMode: 'userPool',
+  });
+
+  if (errors) {
+    console.error('-- Error fetching Data --', errors);
+    return emptyCellar;
+  }
+
+  if (existingCellar?.length > 0) {
+    const cellar = existingCellar[0];
+    let triedDrinkIds = [...cellar.triedDrinkIds] || [];
+    if (action === 'add') {
+      triedDrinkIds.push(drinkId);
+    } else if (action === 'remove') {
+      triedDrinkIds = triedDrinkIds.filter(id => id !== drinkId);
+    }
+
+    const updatedCellar = {
+      id: cellar.id,
+      drinks: cellar.drinks,
+      triedDrinkIds: triedDrinkIds,
+    };
+    // console.log('-- updatedCellar --', updatedCellar);
+
+    const { errors, data: updatedDrinksData } = await client.models.Cellar.update(
+      updatedCellar,
+      { authMode: 'userPool' }
+    );
+
+    if (errors) {
+      console.error('-- Error updating Cellar --', errors);
+      return emptyCellar;
+    }
+
+    return formatCellar(updatedDrinksData);
+  } else {
+    console.error('-- No Cellar found to update triedDrinkIds --');
+    return emptyCellar;
+  }
+
+}
 
 export {
   getCellar,
   createOrReplaceCellar,
+  updateTriedIds,
 };

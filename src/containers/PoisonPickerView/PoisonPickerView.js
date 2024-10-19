@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import SelectInput from '../../components/SelectInput/SelectInput';
 import Button from '../../components/Button/Button';
+import FormControlLabel from '../../components/FormControlLabel/FormControlLabel';
+import FormGroup from '../../components/FormGroup/FormGroup';
 import Slider from '../../components/Slider/Slider';
+import Switch from '../../components/Switch/Switch';
 import Typography from '../../components/Typography/Typography';
 import CircularProgress from '../../components/CircularProgress/CircularProgress';
+import DrinkListItem from '../DrinkListItem/DrinkListItem';
+import { updateTriedIds } from '../../services/cellerServices';
+import { formatNumber } from '../../utils/stringUtils';
 
 const PoisonPickerView = ({ drinks, loading }) => {
   const [bottleStatus, setBottleStatus] = useState('No Preference');
@@ -11,6 +17,9 @@ const PoisonPickerView = ({ drinks, loading }) => {
   const [strengthRange, setStrengthRange] = useState([0, 100]);
   const [ageRange, setAgeRange] = useState([0, 100]);
   const [priceRange, setPriceRange] = useState([0, 100]);
+  const [includeUnkownPrice, setIncludeUnknownPrice] = useState(true);
+  const [includeTriedBefore, setIncludeTriedBefore] = useState(false);
+  const [selectedDrink, setSelectedDrink] = useState();
   const [filteredDrinks, setFilteredDrinks] = useState([]);
   const [possibleDrinks, setPossibleDrinks] = useState([]);
   const [sliderOptions, setSliderOptions] = useState({
@@ -52,7 +61,23 @@ const PoisonPickerView = ({ drinks, loading }) => {
   const handlePick = () => {
     const randomIndex = Math.floor(Math.random() * filteredDrinks.length);
     const selectedDrink = filteredDrinks[randomIndex];
-    alert(`You picked: ${selectedDrink.name}`);
+    setSelectedDrink(selectedDrink);
+  };
+
+  const handleTriedClick = () => {
+    // Change hasTried on selectedDrink to true
+    setSelectedDrink({ ...selectedDrink, hasTried: true });
+
+    // And update the database
+    updateTriedIds(selectedDrink.drinkId, 'add');
+  }
+
+  const handleUnknownPriceChange = (event) => {
+    setIncludeUnknownPrice(event.target.checked);
+  };
+
+  const handleIncludeTriedBeforeChange = (event) => {
+    setIncludeTriedBefore(event.target.checked);
   };
 
   // Set slider options based on *complete* drink list (Open or Closed)
@@ -75,45 +100,55 @@ const PoisonPickerView = ({ drinks, loading }) => {
   // Filter drinks based on Selected Criteria
   useEffect(() => {
     const filterDrinks = () => {
-      console.log('-- sliderOptions --', sliderOptions);
+      // console.log('-- sliderOptions --', sliderOptions);
       let filtered = [...possibleDrinks];
-      console.log('-- Filtered at Initialization --', filtered.length);
+      // console.log('-- Filtered at Initialization --', filtered.length);
 
       if (bottleStatus !== 'No Preference') {
         filtered = filtered.filter(drink => drink.bottleStatus === bottleStatus);
       }
-      console.log('-- Filtered at Bottle Status --', filtered.length);
+      // console.log('-- Filtered at Bottle Status --', filtered.length);
 
       if (selectedTypes.length > 0) {
         filtered = filtered.filter(drink => selectedTypes.includes(drink.type));
       }
-      console.log('-- Filtered at Type --', filtered.length);
+      // console.log('-- Filtered at Type --', filtered.length);
 
+      // If includeTriedBefore is false, remove drinks that have been tried before
+      if (!includeTriedBefore) {
+        filtered = filtered.filter(drink => !drink.hasTried);
+      }
+
+      // If includeUnknownPrice is false, remove drinks with null price
+      if (!includeUnkownPrice) {
+        filtered = filtered.filter(drink => drink.price !== null);
+      }
       
       // Scale the 0-100 value based on the actual values stored in sliderOptions
       const scaledStrengthRange = strengthRange.map(value => (value / 100) * (sliderOptions.strength.max - sliderOptions.strength.min) + sliderOptions.strength.min);
       const scaledAgeRange = ageRange.map(value => (value / 100) * (sliderOptions.age.max - sliderOptions.age.min) + sliderOptions.age.min);
       const scaledPriceRange = priceRange.map(value => (value / 100) * (sliderOptions.price.max - sliderOptions.price.min) + sliderOptions.price.min);
 
-      console.log(scaledStrengthRange);
+      // console.log(scaledStrengthRange);
       filtered = filtered.filter(drink => (drink.strength === null || (drink.strength >= scaledStrengthRange[0] && drink.strength <= scaledStrengthRange[1])));
-      console.log('-- Filtered at Strength --', filtered.length);
-      console.log(scaledAgeRange);
+      // console.log('-- Filtered at Strength --', filtered.length);
+      // console.log(scaledAgeRange);
       filtered = filtered.filter(drink => (drink.statedAge === null || (drink.statedAge >= scaledAgeRange[0] && drink.statedAge <= scaledAgeRange[1])));
-      console.log('-- Filtered at Stated Age --', filtered.length);
-      console.log(scaledPriceRange);
+      // console.log('-- Filtered at Stated Age --', filtered.length);
+      // console.log(scaledPriceRange);
       filtered = filtered.filter(drink => (drink.price === null || (drink.price >= scaledPriceRange[0] && drink.price <= scaledPriceRange[1])));
-      console.log('-- Filtered at Price --', filtered.length);
+      // console.log('-- Filtered at Price --', filtered.length);
+
 
       // List of items in possibleDrinks that are NOT in filtered
-      const removed = possibleDrinks.filter(drink => !filtered.includes(drink));
-      console.log('-- Removed --', removed);
+      // const removed = possibleDrinks.filter(drink => !filtered.includes(drink));
+      // console.log('-- Removed --', removed);
 
       setFilteredDrinks(filtered);
     };
 
     filterDrinks();
-  }, [bottleStatus, selectedTypes, strengthRange, ageRange, priceRange, possibleDrinks, sliderOptions]);
+  }, [bottleStatus, selectedTypes, strengthRange, ageRange, priceRange, possibleDrinks, sliderOptions, includeUnkownPrice, includeTriedBefore]);
 
   return (
     <div>
@@ -131,62 +166,78 @@ const PoisonPickerView = ({ drinks, loading }) => {
             </div>
           ) : (
             <>
-              <SelectInput
-                label="Bottle Status"
-                value={bottleStatus}
-                setValue={setBottleStatus}
-                options={[
-                  { value: 'No Preference', label: 'No Preference' },
-                  { value: 'Open', label: 'Open' },
-                  { value: 'Closed', label: 'Closed' }
-                ]}
-              />
-              <SelectInput
-                label="Types"
-                value={selectedTypes}
-                setValue={setSelectedTypes}
-                options={Array.from(new Set(possibleDrinks.map(drink => drink.type))).map(type => ({ value: type, label: type }))}
-                multiple
-              />
-              <Typography gutterBottom>Strength Range</Typography>
-              <Slider
-                value={strengthRange}
-                onChange={(e, newValue) => setStrengthRange(newValue)}
-                valueLabelDisplay="auto"
-                valueLabelFormat={strengthValueLabelFormat}
-                step={100 / ( sliderOptions.strength.max - sliderOptions.strength.min )}
-                min={sliderOptions.strength.min}
-                max={sliderOptions.strength.max}
-              />
-              <Typography gutterBottom>Age Range</Typography>
-              <Slider
-                value={ageRange}
-                onChange={(e, newValue) => setAgeRange(newValue)}
-                valueLabelDisplay="auto"
-                valueLabelFormat={ageValueLabelFormat}
-                step={100 / ( sliderOptions.age.max - sliderOptions.age.min )}
-                min={sliderOptions.age.min}
-                max={sliderOptions.age.max}
-              />
-              <Typography gutterBottom>Price Range</Typography>
-              <Slider
-                value={priceRange}
-                onChange={(e, newValue) => setPriceRange(newValue)}
-                valueLabelDisplay="auto"
-                valueLabelFormat={priceValueLabelFormat}
-                step={100 / ( sliderOptions.price.max - sliderOptions.price.min )}
-                min={sliderOptions.price.min}
-                max={sliderOptions.price.max}
-              />
+              <FormGroup>
+                <SelectInput
+                  label="Bottle Status"
+                  value={bottleStatus}
+                  setValue={setBottleStatus}
+                  options={[
+                    { value: 'No Preference', label: 'No Preference' },
+                    { value: 'Open', label: 'Open' },
+                    { value: 'Closed', label: 'Closed' }
+                  ]}
+                />
+                <SelectInput
+                  label="Types"
+                  value={selectedTypes}
+                  setValue={setSelectedTypes}
+                  options={Array.from(new Set(possibleDrinks.map(drink => drink.type))).map(type => ({ value: type, label: type }))}
+                  multiple
+                />
+                <FormControlLabel control={
+                  <Switch
+                    checked={includeTriedBefore}
+                    onChange={handleIncludeTriedBeforeChange}
+                  />
+                } label="Include Drinks Tried Before" />
+                <Typography gutterBottom>Strength Range</Typography>
+                <Slider
+                  value={strengthRange}
+                  onChange={(e, newValue) => setStrengthRange(newValue)}
+                  valueLabelDisplay="auto"
+                  valueLabelFormat={strengthValueLabelFormat}
+                  step={100 / ( sliderOptions.strength.max - sliderOptions.strength.min )}
+                  min={sliderOptions.strength.min}
+                  max={sliderOptions.strength.max}
+                />
+                <Typography gutterBottom>Age Range</Typography>
+                <Slider
+                  value={ageRange}
+                  onChange={(e, newValue) => setAgeRange(newValue)}
+                  valueLabelDisplay="auto"
+                  valueLabelFormat={ageValueLabelFormat}
+                  step={100 / ( sliderOptions.age.max - sliderOptions.age.min )}
+                  min={sliderOptions.age.min}
+                  max={sliderOptions.age.max}
+                />
+                <Typography gutterBottom>Price Range</Typography>
+                <Slider
+                  value={priceRange}
+                  onChange={(e, newValue) => setPriceRange(newValue)}
+                  valueLabelDisplay="auto"
+                  valueLabelFormat={priceValueLabelFormat}
+                  step={100 / ( sliderOptions.price.max - sliderOptions.price.min )}
+                  min={sliderOptions.price.min}
+                  max={sliderOptions.price.max}
+                />
+                <FormControlLabel control={
+                  <Switch
+                    checked={includeUnkownPrice}
+                    onChange={handleUnknownPriceChange}
+                  />
+                } label="Include Unknown Price" />
+              </FormGroup>
+              {selectedDrink && (
+                <DrinkListItem drink={selectedDrink} />
+              )}
               <Button onClick={handlePick} disabled={filteredDrinks.length === 0}>
-                Pick One
+                {selectedDrink ? `Pick a different one of your ${formatNumber(filteredDrinks.length)} drinks` : `Pick From One of ${formatNumber(filteredDrinks.length)} Drinks`}
               </Button>
-              <Typography>
-                Total Number of Drinks (Open or Closed): {possibleDrinks.length}
-              </Typography>
-              <Typography>
-                Number of Drinks Matching Filters: {filteredDrinks.length}
-              </Typography>
+              {selectedDrink && (
+                <Button onClick={handleTriedClick} style={{marginLeft: '10px'}}>
+                  That's the one!
+                </Button>
+              )}
             </>
           )}
         </>
