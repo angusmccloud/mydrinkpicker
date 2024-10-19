@@ -1,4 +1,4 @@
-import { generateClient, queries } from 'aws-amplify/data';
+import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 
 const emptyCellar = {
@@ -55,9 +55,6 @@ const getCellar = async () => {
   // console.log('-- userId --', userId);
 
   const { errors, data } = await client.models.Cellar.list({
-    // filter: {
-    //   owner: { eq: userId }
-    // },
     authMode: 'userPool',
   });
 
@@ -81,11 +78,8 @@ const getCellar = async () => {
 const createOrReplaceCellar = async (drinksList) => {
   try{
     const client = generateClient();
-    const { userId } = await getCurrentUser();
+    // const { userId } = await getCurrentUser();
     const { errors, data: existingCellar } = await client.models.Cellar.list({
-      // filter: {
-      //   owner: { eq: userId }
-      // },
       authMode: 'userPool',
     });
 
@@ -121,9 +115,20 @@ const createOrReplaceCellar = async (drinksList) => {
         triedDrinkIds: [],
       };
 
+      // const { data: newDrinksData , errors } = await client.models.Cellar.create({
+      //   query: queries.createCellar,
+      //   variables: newCellar,
+      //   authMode: 'userPool',
+      // });
+
+      // const { errors, data: newDrinksData } = await client.models.Cellar.create(
+      //   newCellar,
+      //   { authMode: 'userPool' }
+      // );
+
       const { errors, data: newDrinksData } = await client.models.Cellar.create(
         newCellar,
-        { authMode: 'userPool' }
+        { authMode: 'userPool'},
       );
 
       // console.log('-- newDrinksData --', newDrinksData);
@@ -148,9 +153,6 @@ const updateTriedIds = async (drinkId, action) => {
   // const { userId } = await getCurrentUser();
 
   const { errors, data: existingCellar } = await client.models.Cellar.list({
-    // filter: {
-    //   owner: { eq: userId }
-    // },
     authMode: 'userPool',
   });
 
