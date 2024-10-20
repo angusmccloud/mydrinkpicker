@@ -167,7 +167,7 @@ const updateTriedIds = async (drinkId, action) => {
     if (action === 'add') {
       triedDrinkIds.push(drinkId);
     } else if (action === 'remove') {
-      triedDrinkIds = triedDrinkIds.filter(id => id !== drinkId);
+      triedDrinkIds = triedDrinkIds.filter(id => id !== drinkId.toString());
     }
 
     const updatedCellar = {

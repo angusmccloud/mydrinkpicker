@@ -11,7 +11,7 @@ import DrinkListItem from '../DrinkListItem/DrinkListItem';
 import { updateTriedIds } from '../../services/cellerServices';
 import { formatNumber } from '../../utils/stringUtils';
 
-const PoisonPickerView = ({ drinks, loading }) => {
+const PoisonPickerView = ({ drinks, loading, handleChangeTried }) => {
   const [bottleStatus, setBottleStatus] = useState('No Preference');
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [strengthRange, setStrengthRange] = useState([0, 100]);
@@ -79,6 +79,16 @@ const PoisonPickerView = ({ drinks, loading }) => {
   const handleIncludeTriedBeforeChange = (event) => {
     setIncludeTriedBefore(event.target.checked);
   };
+
+  const changeTried = (drinkId, tried) => {
+    // Change the Selected Drink if it matches the drinkId
+    if (selectedDrink && selectedDrink.drinkId === drinkId) {
+      setSelectedDrink({ ...selectedDrink, hasTried: tried });
+    }
+
+    // Hit the Callback of handleChangeTried
+    handleChangeTried(drinkId, tried);
+  }
 
   // Set slider options based on *complete* drink list (Open or Closed)
   useEffect(() => {
@@ -227,15 +237,17 @@ const PoisonPickerView = ({ drinks, loading }) => {
                 } label="Include Unknown Price" />
               </FormGroup>
               {selectedDrink && (
-                <DrinkListItem drink={selectedDrink} />
+                <DrinkListItem drink={selectedDrink} handleChangeTried={changeTried} />
               )}
               <Button onClick={handlePick} disabled={filteredDrinks.length === 0}>
                 {selectedDrink ? `Pick a different one of your ${formatNumber(filteredDrinks.length)} drinks` : `Pick From One of ${formatNumber(filteredDrinks.length)} Drinks`}
               </Button>
               {selectedDrink && (
-                <Button onClick={handleTriedClick} style={{marginLeft: '10px'}}>
-                  That's the one!
-                </Button>
+                <div style={{marginTop: 10}}>
+                  <Button onClick={handleTriedClick}>
+                    That's the one!
+                  </Button>
+                </div>
               )}
             </>
           )}

@@ -4,11 +4,11 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import DrinkListItem from '../DrinkListItem/DrinkListItem';
 import { Typography, CircularProgress } from '../../components';
 
-const DrinkList = ({ drinks, loading, uploading }) => {
+const DrinkList = ({ drinks, loading, uploading, handleChangeTried }) => {
   const rowRenderer = ({ index, style }) => {
     const drink = drinks[index];
     return (
-      <DrinkListItem drink={drink} key={drink.drinkId} style={style} />
+      <DrinkListItem drink={drink} key={drink.drinkId} style={style} handleChangeTried={handleChangeTried} />
     );
   };
 

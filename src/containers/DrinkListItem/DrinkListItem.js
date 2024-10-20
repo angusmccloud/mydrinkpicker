@@ -1,18 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ListItem, ListItemAvatar, ListItemText, Avatar } from '@mui/material';
 import { Typography } from '../../components';
 import { formatCurrency } from '../../utils';
+import { updateTriedIds } from '../../services/cellerServices';
 import { Liquor, CheckCircle } from '@mui/icons-material';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 
 
-const DrinkListItem = ({ drink, style }) => {
+const DrinkListItem = ({ drink, style, handleChangeTried }) => {
   const { drinkId, brand, name, bottlingSerie, type, statedAge, strength, imageUrl, bottleStatus, bottles, price, hasTried } = drink;
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const goToWhiskybase = () => {
+    window.open(`https://www.whiskybase.com/whiskies/whisky/${drinkId}`, '_blank');
+    handleClose();
+  }
+
+  const toggleTried = () => {
+    handleClose();
+    updateTriedIds(drinkId, hasTried ? 'remove' : 'add');
+    handleChangeTried(drinkId, !hasTried);
+  }
   
   const title = `${brand} ${name}${bottlingSerie ? ` (${bottlingSerie})` : ''}`;
 
   return (
     <ListItem sx={{paddingLeft: 0}} key={drinkId} style={style}>
-      <ListItemAvatar sx={{marginRight: '10px'}}>
+      <ListItemAvatar sx={{marginRight: '10px'}} onClick={handleClick}>
         {imageUrl ? (
           // <Avatar sx={{ height: 75, width: 75 }} variant={'rounded'} src={imageUrl} />
           <img src={imageUrl} alt={title} style={{ width: 75, height: 75, objectFit: 'contain' }} />
@@ -27,6 +49,18 @@ const DrinkListItem = ({ drink, style }) => {
           </div>
         )}
       </ListItemAvatar>
+      <Menu
+        id="basic-menu"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        MenuListProps={{
+          'aria-labelledby': 'basic-button',
+        }}
+      >
+        <MenuItem onClick={goToWhiskybase}>View on Whisky Base</MenuItem>
+        <MenuItem onClick={toggleTried}>{hasTried ? 'Remove from Tried List' : 'Mark as Tried'}</MenuItem>
+      </Menu>
       <ListItemText
         primary={title}
         secondary={

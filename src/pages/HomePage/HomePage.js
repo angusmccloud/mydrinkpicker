@@ -7,6 +7,20 @@ const HomePage = () => {
   const [drinks, setDrinks] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const handleChangeTried = (drinkId, tried) => {
+    const updatedDrinks = drinks.map((drink) => {
+      if (drink.drinkId === drinkId) {
+        return {
+          ...drink,
+          hasTried: tried,
+        };
+      }
+      return drink;
+    });
+    setDrinks(updatedDrinks);
+  }
+
+
   useEffect(() => {
     const fetchDrinks = async () => {
       const drinksData = await getCellar();
@@ -23,7 +37,7 @@ const HomePage = () => {
       pageName='Pick a Poison'
       pageKey='home'
     >
-      <PoisonPickerView drinks={drinks} loading={loading} />
+      <PoisonPickerView drinks={drinks} loading={loading} handleChangeTried={handleChangeTried} />
     </PageContent>
   );
 }

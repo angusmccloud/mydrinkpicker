@@ -5,13 +5,11 @@ import { formatDate } from '../../utils/dateUtils';
 import PageContent from '../../containers/PageContent/PageContent';
 import { createOrReplaceCellar, getCellar } from '../../services/cellerServices';
 import DrinkList from '../../containers/DrinkList/DrinkList';
-import IconButton from '../../components/IconButton/IconButton';
 import TextField from '../../components/TextField/TextField';
-import Tooltip from '../../components/Tooltip/Tooltip';
 import Typography from '../../components/Typography/Typography';
-import {
-  Info,
-} from '@mui/icons-material';
+// import IconButton from '../../components/IconButton/IconButton';
+// import Tooltip from '../../components/Tooltip/Tooltip';
+// import { Info } from '@mui/icons-material';
 import { useTheme } from '@mui/material';
 
 const ManageDrinksPage = () => {
@@ -153,6 +151,20 @@ const ManageDrinksPage = () => {
     )
   }
 
+  const handleChangeTried = (drinkId, tried) => {
+    const updatedDrinks = drinks.map((drink) => {
+      if (drink.drinkId === drinkId) {
+        return {
+          ...drink,
+          hasTried: tried,
+        };
+      }
+      return drink;
+    });
+    setDrinks(updatedDrinks);
+    applyDisplayFilter(searchTerms, updatedDrinks);
+  }
+
   useEffect(() => {
     fetchDrinks();
   }, []);
@@ -160,7 +172,7 @@ const ManageDrinksPage = () => {
   return (
     <PageContent pageName="Manage Drinks" pageKey="manage-drinks">
       {renderHeader()}
-      <DrinkList drinks={displayedDrinks} loading={loading} uploading={uploading} />
+      <DrinkList drinks={displayedDrinks} loading={loading} uploading={uploading} handleChangeTried={handleChangeTried} />
     </PageContent>
   );
 };
