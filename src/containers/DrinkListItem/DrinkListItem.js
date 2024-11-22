@@ -8,7 +8,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 
 
-const DrinkListItem = ({ drink, style, handleChangeTried }) => {
+const DrinkListItem = ({ drink, style, handleChangeTried, onlyDrinkableBottles = false }) => {
   const { drinkId, brand, name, bottlingSerie, type, statedAge, strength, imageUrl, bottleStatus, bottles, price, hasTried } = drink;
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -31,6 +31,7 @@ const DrinkListItem = ({ drink, style, handleChangeTried }) => {
   }
   
   const title = `${brand} ${name}${bottlingSerie ? ` (${bottlingSerie})` : ''}`;
+  const numberOfBottles = !onlyDrinkableBottles ? bottles.length : bottles.filter(bottle => bottle.status === 'open' || bottle.status === 'closed').length;
 
   return (
     <ListItem sx={{paddingLeft: 0}} key={drinkId} style={style}>
@@ -94,7 +95,7 @@ const DrinkListItem = ({ drink, style, handleChangeTried }) => {
             )}
             <br/>
             <Typography component="span" variant="body2" color="textPrimary">
-              {bottleStatus} - {bottles.length} bottle{bottles.length > 1 ? 's' : ''}
+              {bottleStatus} - {numberOfBottles} bottle{numberOfBottles > 1 ? 's' : ''}
             </Typography>
           </>
         }

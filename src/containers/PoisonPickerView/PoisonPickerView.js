@@ -237,7 +237,7 @@ const PoisonPickerView = ({ drinks, loading, handleChangeTried }) => {
                 } label="Include Unknown Price" />
               </FormGroup>
               {selectedDrink && (
-                <DrinkListItem drink={selectedDrink} handleChangeTried={changeTried} />
+                <DrinkListItem drink={selectedDrink} handleChangeTried={changeTried} onlyDrinkableBottles />
               )}
               <Button onClick={handlePick} disabled={filteredDrinks.length === 0}>
                 {selectedDrink ? `Pick a different one of your ${formatNumber(filteredDrinks.length)} drinks` : `Pick From One of ${formatNumber(filteredDrinks.length)} Drinks`}
