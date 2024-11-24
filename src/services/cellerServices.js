@@ -148,7 +148,7 @@ const createOrReplaceCellar = async (drinksList) => {
 
 // Can be passed a single drinkId, and add or remove as action
 const updateTriedIds = async (drinkId, action) => {
-  console.log('-- drinkId --', drinkId);
+  // console.log('-- drinkId --', drinkId);
   const client = generateClient();
   // const { userId } = await getCurrentUser();
 
@@ -168,6 +168,8 @@ const updateTriedIds = async (drinkId, action) => {
       triedDrinkIds.push(drinkId);
     } else if (action === 'remove') {
       triedDrinkIds = triedDrinkIds.filter(id => id !== drinkId.toString());
+    } else if (action === 'clear') {
+      triedDrinkIds = [];
     }
 
     const updatedCellar = {
@@ -195,8 +197,13 @@ const updateTriedIds = async (drinkId, action) => {
 
 }
 
+const clearTriedDrinkIds = async () => {
+  return await updateTriedIds(null, 'clear');
+}
+
 export {
   getCellar,
   createOrReplaceCellar,
   updateTriedIds,
+  clearTriedDrinkIds,
 };

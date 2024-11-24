@@ -20,15 +20,13 @@ const HomePage = () => {
     setDrinks(updatedDrinks);
   }
 
+  const fetchDrinks = async () => {
+    const drinksData = await getCellar();
+    setDrinks(drinksData.drinks);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchDrinks = async () => {
-      const drinksData = await getCellar();
-      setDrinks(drinksData.drinks);
-      setLoading(false);
-      // console.log(drinksData);
-    };
-
     fetchDrinks();
   }, []);
 
@@ -36,6 +34,7 @@ const HomePage = () => {
     <PageContent
       pageName='Pick a Poison'
       pageKey='home'
+      fetchDrinks={fetchDrinks}
     >
       <PoisonPickerView drinks={drinks} loading={loading} handleChangeTried={handleChangeTried} />
     </PageContent>

@@ -9,7 +9,7 @@ import {
 import { Button } from '../../components';
 
 const DeleteDialog = (props) => {
-  const { open, handleConfirm, handleClose, title, message } = props;
+  const { open, handleConfirm, handleClose, title, message, confirmButtonText } = props;
 
   return (
     <Dialog
@@ -29,7 +29,7 @@ const DeleteDialog = (props) => {
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
         <Button onClick={handleConfirm} color={'error'} autoFocus>
-          Delete
+          {confirmButtonText || 'Delete'}
         </Button>
       </DialogActions>
     </Dialog>

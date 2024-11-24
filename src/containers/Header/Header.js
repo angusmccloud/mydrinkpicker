@@ -14,12 +14,15 @@ import {
 import {
   AccountCircle,
   Logout,
+  DeleteForever,
   Home,
   TableRows,
   Menu as MenuIcon,
 } from '@mui/icons-material';
 import { ConditionalWrapper, Divider, Typography } from '../../components';
 import { AuthContext, UnauthedUser } from '../../contexts';
+import DeleteDialog from '../DeleteDialog/DeleteDialog';
+import { clearTriedDrinkIds } from '../../services/cellerServices';
 
 const pages = [
   {
@@ -39,7 +42,7 @@ const pages = [
   }];
 
 const Header = (props) => {
-  const { pageName, pageKey } = props;
+  const { pageName, pageKey, fetchDrinks } = props;
   const [userAnchorEl, setUserAnchorEl] = useState(null);
   const [userMenuSide, setUserMenuSide] = useState('left');
   const [navigationAnchorEl, setSavigationAnchorEl] = useState(null);
@@ -47,6 +50,7 @@ const Header = (props) => {
   const theme = useTheme();
   const userOpen = Boolean(userAnchorEl);
   const navigationOpen = Boolean(navigationAnchorEl);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleClickUserMenu = (currentTarget, whichSide) => {
     setUserMenuSide(whichSide);
@@ -65,6 +69,20 @@ const Header = (props) => {
   const handleLogout = () => {
     signOut();
     // setUser(UnauthedUser);
+  };
+
+  const handleRestartJourney = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmRestartJourney = async () => {
+    await clearTriedDrinkIds();
+    setDeleteDialogOpen(false);
+    fetchDrinks();
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false);
   };
 
   const renderPageTitle = () => {
@@ -279,6 +297,12 @@ const Header = (props) => {
           >
             <MenuItem disabled>{user.signInDetails.loginId}</MenuItem>
             <Divider />
+            <MenuItem onClick={handleRestartJourney}>
+              <ListItemIcon>
+                <DeleteForever fontSize='small' color={'primary'} />
+              </ListItemIcon>
+              Restart Journey
+            </MenuItem>
             <MenuItem onClick={handleLogout}>
               <ListItemIcon>
                 <Logout fontSize='small' color={'primary'} />
@@ -288,6 +312,14 @@ const Header = (props) => {
           </Menu>
         </Toolbar>
       </AppBar>
+      <DeleteDialog
+        open={deleteDialogOpen}
+        handleConfirm={handleConfirmRestartJourney}
+        handleClose={handleCloseDeleteDialog}
+        title="Restart Journey"
+        message="Are you sure you want to reset all of your tried drinks? This cannot be undone"
+        confirmButtonText="Restart Journey"
+      />
     </Box>
   );
 };

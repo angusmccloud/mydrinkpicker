@@ -170,7 +170,7 @@ const ManageDrinksPage = () => {
   }, []);
 
   return (
-    <PageContent pageName="Manage Drinks" pageKey="manage-drinks">
+    <PageContent pageName="Manage Drinks" pageKey="manage-drinks" fetchDrinks={fetchDrinks}>
       {renderHeader()}
       <DrinkList drinks={displayedDrinks} loading={loading} uploading={uploading} handleChangeTried={handleChangeTried} />
     </PageContent>
