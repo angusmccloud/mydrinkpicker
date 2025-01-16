@@ -10,10 +10,12 @@ import CircularProgress from '../../components/CircularProgress/CircularProgress
 import DrinkListItem from '../DrinkListItem/DrinkListItem';
 import { updateTriedIds } from '../../services/cellerServices';
 import { formatNumber } from '../../utils/stringUtils';
+import AutoComplete from '../../components/AutoComplete/AutoComplete';
 
 const PoisonPickerView = ({ drinks, loading, handleChangeTried }) => {
   const [bottleStatus, setBottleStatus] = useState('No Preference');
   const [selectedTypes, setSelectedTypes] = useState([]);
+  const [selectedBrands, setSelectedBrands] = useState([]);
   const [strengthRange, setStrengthRange] = useState([0, 100]);
   const [ageRange, setAgeRange] = useState([0, 100]);
   const [priceRange, setPriceRange] = useState([0, 100]);
@@ -124,6 +126,11 @@ const PoisonPickerView = ({ drinks, loading, handleChangeTried }) => {
       }
       // console.log('-- Filtered at Type --', filtered.length);
 
+      if (selectedBrands.length > 0) {
+        filtered = filtered.filter(drink => selectedBrands.includes(drink.brand));
+      }
+      // console.log('-- Filtered at Brand --', filtered.length);
+
       // If includeTriedBefore is false, remove drinks that have been tried before
       if (!includeTriedBefore) {
         filtered = filtered.filter(drink => !drink.hasTried);
@@ -158,7 +165,7 @@ const PoisonPickerView = ({ drinks, loading, handleChangeTried }) => {
     };
 
     filterDrinks();
-  }, [bottleStatus, selectedTypes, strengthRange, ageRange, priceRange, possibleDrinks, sliderOptions, includeUnkownPrice, includeTriedBefore]);
+  }, [bottleStatus, selectedTypes, selectedBrands, strengthRange, ageRange, priceRange, possibleDrinks, sliderOptions, includeUnkownPrice, includeTriedBefore]);
 
   return (
     <div>
@@ -186,11 +193,19 @@ const PoisonPickerView = ({ drinks, loading, handleChangeTried }) => {
                     { value: 'Closed', label: 'Closed' }
                   ]}
                 />
-                <SelectInput
+                <AutoComplete
                   label="Types"
                   value={selectedTypes}
-                  setValue={setSelectedTypes}
-                  options={Array.from(new Set(possibleDrinks.map(drink => drink.type))).map(type => ({ value: type, label: type }))}
+                  onChange={(event, newValue) => setSelectedTypes(newValue)}
+                  options={Array.from(new Set(possibleDrinks.map(drink => drink.type))).map(type => (type))}
+                  multiple
+                />
+                <AutoComplete
+                  label="Brands"
+                  value={selectedBrands}
+                  onChange={(event, newValue) => setSelectedBrands(newValue)}
+                  options={Array.from(new Set(possibleDrinks.map(drink => drink.brand))).sort().map(brand => (brand))}
+                  sx={{marginTop: '10px'}}
                   multiple
                 />
                 <FormControlLabel control={

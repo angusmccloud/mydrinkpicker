@@ -34,7 +34,8 @@ const formatCellar = async (cellar) => {
         ...drink,
         price: averagePrice || null,
         bottleStatus: bottleStatus,
-        hasTried: hasTried
+        hasTried: hasTried,
+        brand: drink.brand.toString()
       };
     });
 
