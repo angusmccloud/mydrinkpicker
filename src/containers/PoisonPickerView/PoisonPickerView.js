@@ -20,6 +20,7 @@ const PoisonPickerView = ({ drinks, loading, handleChangeTried }) => {
   const [ageRange, setAgeRange] = useState([0, 100]);
   const [priceRange, setPriceRange] = useState([0, 100]);
   const [includeUnkownPrice, setIncludeUnknownPrice] = useState(true);
+  const [includeUnknownAge, setIncludeUnknownAge] = useState(true);
   const [includeTriedBefore, setIncludeTriedBefore] = useState(false);
   const [selectedDrink, setSelectedDrink] = useState();
   const [filteredDrinks, setFilteredDrinks] = useState([]);
@@ -76,6 +77,10 @@ const PoisonPickerView = ({ drinks, loading, handleChangeTried }) => {
 
   const handleUnknownPriceChange = (event) => {
     setIncludeUnknownPrice(event.target.checked);
+  };
+
+  const handleUnknownAgeChange = (event) => {
+    setIncludeUnknownAge(event.target.checked);
   };
 
   const handleIncludeTriedBeforeChange = (event) => {
@@ -140,6 +145,11 @@ const PoisonPickerView = ({ drinks, loading, handleChangeTried }) => {
       if (!includeUnkownPrice) {
         filtered = filtered.filter(drink => drink.price !== null);
       }
+
+      // If includeUnknownAge is false, remove drinks with null age
+      if (!includeUnknownAge) {
+        filtered = filtered.filter(drink => drink.statedAge !== null);
+      }
       
       // Scale the 0-100 value based on the actual values stored in sliderOptions
       const scaledStrengthRange = strengthRange.map(value => (value / 100) * (sliderOptions.strength.max - sliderOptions.strength.min) + sliderOptions.strength.min);
@@ -165,7 +175,7 @@ const PoisonPickerView = ({ drinks, loading, handleChangeTried }) => {
     };
 
     filterDrinks();
-  }, [bottleStatus, selectedTypes, selectedBrands, strengthRange, ageRange, priceRange, possibleDrinks, sliderOptions, includeUnkownPrice, includeTriedBefore]);
+  }, [bottleStatus, selectedTypes, selectedBrands, strengthRange, ageRange, priceRange, possibleDrinks, sliderOptions, includeUnkownPrice, includeUnknownAge, includeTriedBefore]);
 
   return (
     <div>
@@ -234,6 +244,12 @@ const PoisonPickerView = ({ drinks, loading, handleChangeTried }) => {
                   min={sliderOptions.age.min}
                   max={sliderOptions.age.max}
                 />
+                <FormControlLabel control={
+                  <Switch
+                    checked={includeUnknownAge}
+                    onChange={handleUnknownAgeChange}
+                  />
+                } label="Include Unknown Age" />
                 <Typography gutterBottom>Price Range</Typography>
                 <Slider
                   value={priceRange}
