@@ -100,7 +100,7 @@ const PoisonPickerView = ({ drinks, loading, handleChangeTried }) => {
   // Set slider options based on *complete* drink list (Open or Closed)
   useEffect(() => {
     // Remove Sample and Empty drinks
-    const possibleDrinks = drinks.filter(drink => drink.bottleStatus === 'Open' || drink.bottleStatus === 'Closed');
+    const possibleDrinks = drinks.filter(drink => drink.bottleStatus === 'Open' || drink.bottleStatus === 'Closed' || drink.bottleStatus === 'Unknown');
     setPossibleDrinks(possibleDrinks);
 
     // Set slider options
