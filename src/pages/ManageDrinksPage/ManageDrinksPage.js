@@ -88,7 +88,7 @@ const ManageDrinksPage = () => {
 
           const bottle = {
             id: uuidv4(),
-            status: row['Bottle status'],
+            status: row['Bottle Status'],
             size: row['Size'],
             price: row['Price Paid'],
             dateAdded: formatDate(row['Added on']),
