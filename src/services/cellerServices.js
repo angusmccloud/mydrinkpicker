@@ -19,13 +19,15 @@ const formatCellar = async (cellar) => {
       const averagePrice = nonNullPrices.length >= 1 ? nonNullPrices.reduce((acc, price) => acc + price, 0) / nonNullPrices.length : null;
 
       let bottleStatus = 'Closed';
-      const bottleStatuses = drink.bottles.map(bottle => bottle.status.toLowerCase());
+      const bottleStatuses = drink.bottles.map(bottle => bottle.status ? bottle.status.toLowerCase() : 'unknown');
       if (bottleStatuses.every(status => status === 'empty')) {
         bottleStatus = 'Empty';
       } else if (bottleStatuses.every(status => status === 'sample')) {
         bottleStatus = 'Sample';
       } else if (bottleStatuses.some(status => status === 'open')) {
         bottleStatus = 'Open';
+      } else if (bottleStatuses.every(status => status === 'unknown')) {
+        bottleStatus = 'Unknown';
       }
 
       const hasTried = triedDrinkIds.includes(drink.drinkId);
