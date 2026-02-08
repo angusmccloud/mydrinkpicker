@@ -36,8 +36,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@aws-amplify/backend": "^1.0.4",
-    "@aws-amplify/backend-cli": "^1.2.2",
+    "@aws-amplify/backend": "^1.20.0",
+    "@aws-amplify/backend-cli": "^1.8.2",
     "@types/copy-webpack-plugin": "^10.1.0",
     "@types/node": "^22.2.0",
     "@types/react": "^18.3.3",
@@ -67,7 +67,9 @@
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "amplify:generate-outputs": "ampx generate outputs --app-id d1s042ouucc96o --branch main --format json --out-dir src",
+    "amplify:pipeline-deploy": "ampx pipeline-deploy --app-id d1s042ouucc96o --branch main --outputs-format json --outputs-out-dir src"
   },
   "eslintConfig": {
     "extends": [
