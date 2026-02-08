@@ -18,18 +18,27 @@ const toNumberId = (value) => {
 const makeCurrentDrinkRecordId = (userId, drinkId) => `${userId}#drink#${drinkId}`;
 const makeTriedDrinkRecordId = (userId, drinkId) => `${userId}#tried#${drinkId}`;
 
-const listAllModelItems = async (listFn, authMode = 'userPool') => {
+const assertScalableModels = (client) => {
+  const hasCurrentDrink = Boolean(client?.models?.CurrentDrink);
+  const hasTriedDrink = Boolean(client?.models?.TriedDrink);
+
+  if (!hasCurrentDrink || !hasTriedDrink) {
+    throw new Error('CurrentDrink/TriedDrink models are unavailable. Deploy backend and refresh amplify_outputs.json.');
+  }
+};
+
+const listAllModelItems = async (model, authMode = 'userPool') => {
   const records = [];
   let nextToken;
 
   do {
-    const response = await listFn({
+    const response = await model.list({
       authMode,
       limit: LIST_PAGE_SIZE,
       nextToken,
     });
 
-    if (response?.errors) {
+    if (response?.errors?.length > 0) {
       return { data: [], errors: response.errors };
     }
 
@@ -40,11 +49,11 @@ const listAllModelItems = async (listFn, authMode = 'userPool') => {
   return { data: records, errors: null };
 };
 
-const runInBatches = async (items, batchSize, worker) => {
+const runInBatches = async (items, worker) => {
   const settled = [];
 
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batch = items.slice(i, i + batchSize);
+  for (let i = 0; i < items.length; i += MUTATION_BATCH_SIZE) {
+    const batch = items.slice(i, i + MUTATION_BATCH_SIZE);
     const batchSettled = await Promise.allSettled(batch.map(worker));
     settled.push(...batchSettled);
   }
@@ -84,12 +93,14 @@ const normalizeIncomingDrinksList = (drinksPayload) => {
 
 const formatDrink = (drink, triedDrinkIdSet) => {
   const bottles = Array.isArray(drink.bottles) ? drink.bottles : [];
-  const nonNullPrices = bottles.map((bottle) => bottle?.price).filter((price) => price !== null && price !== undefined);
+  const nonNullPrices = bottles
+    .map((bottle) => bottle?.price)
+    .filter((price) => price !== null && price !== undefined);
   const averagePrice = nonNullPrices.length > 0
     ? nonNullPrices.reduce((acc, price) => acc + price, 0) / nonNullPrices.length
     : null;
 
-  const bottleStatuses = bottles.map((bottle) => bottle?.status ? bottle.status.toLowerCase() : 'unknown');
+  const bottleStatuses = bottles.map((bottle) => (bottle?.status ? bottle.status.toLowerCase() : 'unknown'));
   let bottleStatus = 'Closed';
 
   if (bottleStatuses.length === 0 || bottleStatuses.every((status) => status === 'unknown')) {
@@ -127,34 +138,8 @@ const formatFromCurrentDrinks = (currentDrinks, triedDrinkIds) => {
   };
 };
 
-const formatLegacyCellar = (cellar, triedDrinkIdsOverride = null) => {
-  try {
-    const legacyTriedDrinkIds = (cellar?.triedDrinkIds || [])
-      .map((id) => toNumberId(id))
-      .filter((id) => id !== null);
-    const triedDrinkIds = triedDrinkIdsOverride || legacyTriedDrinkIds;
-
-    const triedDrinkIdSet = new Set(triedDrinkIds);
-
-    const drinks = (cellar?.drinks || [])
-      .map((rawDrink) => coerceDrink(rawDrink))
-      .filter(Boolean)
-      .map((drink) => formatDrink(drink, triedDrinkIdSet))
-      .filter((drink) => drink.drinkId !== null);
-
-    return {
-      drinks,
-      cellarId: cellar.id,
-      triedDrinkIds,
-    };
-  } catch (error) {
-    console.error('-- Error formatting legacy cellar --', error);
-    return emptyCellar;
-  }
-};
-
 const getTriedDrinkIds = async (client) => {
-  const { data: triedRecords, errors } = await listAllModelItems(client.models.TriedDrink.list.bind(client.models.TriedDrink));
+  const { data: triedRecords, errors } = await listAllModelItems(client.models.TriedDrink);
 
   if (errors) {
     console.error('-- Error fetching tried drinks --', errors);
@@ -169,7 +154,7 @@ const getTriedDrinkIds = async (client) => {
 };
 
 const getCurrentDrinkRecords = async (client) => {
-  const { data, errors } = await listAllModelItems(client.models.CurrentDrink.list.bind(client.models.CurrentDrink));
+  const { data, errors } = await listAllModelItems(client.models.CurrentDrink);
 
   if (errors) {
     console.error('-- Error fetching current drinks --', errors);
@@ -179,48 +164,6 @@ const getCurrentDrinkRecords = async (client) => {
   return data;
 };
 
-const getLegacyCellar = async (client) => {
-  const { errors, data } = await client.models.Cellar.list({ authMode: 'userPool', limit: 1 });
-
-  if (errors) {
-    console.error('-- Error fetching legacy Cellar --', errors);
-    return null;
-  }
-
-  return data?.[0] || null;
-};
-
-const upsertTriedIds = async (client, userId, triedDrinkIds) => {
-  const uniqueIds = Array.from(new Set(triedDrinkIds));
-
-  const settled = await runInBatches(uniqueIds, MUTATION_BATCH_SIZE, (drinkId) =>
-    client.models.TriedDrink.create(
-      {
-        id: makeTriedDrinkRecordId(userId, drinkId),
-        drinkId,
-      },
-      { authMode: 'userPool' }
-    )
-  );
-  const hardFailures = settled.filter((result) => {
-    if (result.status === 'rejected') {
-      return true;
-    }
-
-    const errors = result.value?.errors || [];
-    if (errors.length === 0) {
-      return false;
-    }
-
-    const onlyAlreadyExists = errors.every((error) => (error?.message || '').toLowerCase().includes('already exists'));
-    return !onlyAlreadyExists;
-  });
-
-  if (hardFailures.length > 0) {
-    console.error('-- Error upserting tried drink ids --', hardFailures);
-  }
-};
-
 const replaceCurrentDrinks = async (client, userId, drinks) => {
   const existingCurrentDrinks = await getCurrentDrinkRecords(client);
   if (existingCurrentDrinks === null) {
@@ -228,41 +171,40 @@ const replaceCurrentDrinks = async (client, userId, drinks) => {
   }
 
   if (existingCurrentDrinks.length > 0) {
-    const deleteResults = await runInBatches(
-      existingCurrentDrinks,
-      MUTATION_BATCH_SIZE,
-      (drink) => client.models.CurrentDrink.delete({ id: drink.id }, { authMode: 'userPool' })
+    const deleteResults = await runInBatches(existingCurrentDrinks, (drink) =>
+      client.models.CurrentDrink.delete({ id: drink.id }, { authMode: 'userPool' })
     );
 
-    const failedDeletes = deleteResults.filter((result) => result.status === 'rejected' || result.value?.errors?.length > 0);
+    const failedDeletes = deleteResults.filter(
+      (result) => result.status === 'rejected' || result.value?.errors?.length > 0
+    );
     if (failedDeletes.length > 0) {
       console.error('-- Error clearing existing current drinks --', failedDeletes);
       return false;
     }
   }
 
-  const createResults = await runInBatches(
-    drinks,
-    MUTATION_BATCH_SIZE,
-    (drink) =>
-      client.models.CurrentDrink.create(
-        {
-          id: makeCurrentDrinkRecordId(userId, drink.drinkId),
-          drinkId: drink.drinkId,
-          brand: drink.brand,
-          name: drink.name,
-          bottlingSerie: drink.bottlingSerie || null,
-          statedAge: drink.statedAge ?? null,
-          strength: drink.strength ?? null,
-          type: drink.type || null,
-          imageUrl: drink.imageUrl || '',
-          bottles: Array.isArray(drink.bottles) ? drink.bottles : [],
-        },
-        { authMode: 'userPool' }
-      )
+  const createResults = await runInBatches(drinks, (drink) =>
+    client.models.CurrentDrink.create(
+      {
+        id: makeCurrentDrinkRecordId(userId, drink.drinkId),
+        drinkId: drink.drinkId,
+        brand: drink.brand,
+        name: drink.name,
+        bottlingSerie: drink.bottlingSerie || null,
+        statedAge: drink.statedAge ?? null,
+        strength: drink.strength ?? null,
+        type: drink.type || null,
+        imageUrl: drink.imageUrl || '',
+        bottles: Array.isArray(drink.bottles) ? drink.bottles : [],
+      },
+      { authMode: 'userPool' }
+    )
   );
 
-  const failedCreates = createResults.filter((result) => result.status === 'rejected' || result.value?.errors?.length > 0);
+  const failedCreates = createResults.filter(
+    (result) => result.status === 'rejected' || result.value?.errors?.length > 0
+  );
   if (failedCreates.length > 0) {
     console.error('-- Error creating current drinks --', failedCreates);
     return false;
@@ -271,121 +213,44 @@ const replaceCurrentDrinks = async (client, userId, drinks) => {
   return true;
 };
 
-const deleteLegacyCellarIfPresent = async (client) => {
-  const legacyCellar = await getLegacyCellar(client);
-
-  if (!legacyCellar) {
-    return;
-  }
-
-  const { errors } = await client.models.Cellar.delete({ id: legacyCellar.id }, { authMode: 'userPool' });
-  if (errors?.length > 0) {
-    console.error('-- Error deleting legacy Cellar during migration --', errors);
-  }
-};
-
-const syncLegacyTriedIds = async (client, action, normalizedDrinkId = null) => {
-  const currentDrinkRecords = await getCurrentDrinkRecords(client);
-  if (currentDrinkRecords === null || currentDrinkRecords.length > 0) {
-    return true;
-  }
-
-  const legacyCellar = await getLegacyCellar(client);
-  if (!legacyCellar) {
-    return true;
-  }
-
-  const legacyTried = (legacyCellar.triedDrinkIds || []).map((id) => id.toString());
-  let nextLegacyTried = legacyTried;
-
-  if (action === 'clear') {
-    nextLegacyTried = [];
-  } else if (action === 'add' && normalizedDrinkId !== null) {
-    const stringId = normalizedDrinkId.toString();
-    nextLegacyTried = legacyTried.includes(stringId) ? legacyTried : [...legacyTried, stringId];
-  } else if (action === 'remove' && normalizedDrinkId !== null) {
-    nextLegacyTried = legacyTried.filter((id) => id !== normalizedDrinkId.toString());
-  }
-
-  const { errors } = await client.models.Cellar.update(
-    {
-      id: legacyCellar.id,
-      drinks: legacyCellar.drinks,
-      triedDrinkIds: nextLegacyTried,
-    },
-    { authMode: 'userPool' }
-  );
-
-  if (errors?.length > 0) {
-    console.error('-- Error syncing legacy tried ids --', errors);
-    return false;
-  }
-
-  return true;
-};
-
 const getCellar = async () => {
-  const client = generateClient();
+  try {
+    const client = generateClient();
+    assertScalableModels(client);
 
-  const [currentDrinkRecords, triedDrinkIds] = await Promise.all([
-    getCurrentDrinkRecords(client),
-    getTriedDrinkIds(client),
-  ]);
+    const [currentDrinkRecords, triedDrinkIds] = await Promise.all([
+      getCurrentDrinkRecords(client),
+      getTriedDrinkIds(client),
+    ]);
 
-  if (currentDrinkRecords === null || triedDrinkIds === null) {
+    if (currentDrinkRecords === null || triedDrinkIds === null) {
+      return emptyCellar;
+    }
+
+    return formatFromCurrentDrinks(currentDrinkRecords, triedDrinkIds);
+  } catch (error) {
+    console.error('-- Error fetching cellar --', error);
     return emptyCellar;
   }
-
-  if (currentDrinkRecords.length > 0) {
-    return formatFromCurrentDrinks(currentDrinkRecords, triedDrinkIds);
-  }
-
-  const legacyCellar = await getLegacyCellar(client);
-  if (legacyCellar) {
-    const effectiveTriedDrinkIds = triedDrinkIds.length > 0
-      ? triedDrinkIds
-      : (legacyCellar.triedDrinkIds || [])
-        .map((id) => toNumberId(id))
-        .filter((id) => id !== null);
-
-    return formatLegacyCellar(legacyCellar, effectiveTriedDrinkIds);
-  }
-
-  if (triedDrinkIds.length > 0) {
-    return formatFromCurrentDrinks([], triedDrinkIds);
-  }
-
-  return emptyCellar;
 };
 
 const createOrReplaceCellar = async (drinksList) => {
   try {
     const client = generateClient();
-    const { userId } = await getCurrentUser();
+    assertScalableModels(client);
 
+    const { userId } = await getCurrentUser();
     const parsedDrinks = normalizeIncomingDrinksList(drinksList);
 
-    let triedDrinkIds = await getTriedDrinkIds(client);
+    const triedDrinkIds = await getTriedDrinkIds(client);
     if (triedDrinkIds === null) {
       return emptyCellar;
-    }
-
-    const legacyCellar = await getLegacyCellar(client);
-    if (legacyCellar?.triedDrinkIds?.length > 0) {
-      const legacyTriedIds = legacyCellar.triedDrinkIds
-        .map((id) => toNumberId(id))
-        .filter((id) => id !== null);
-
-      triedDrinkIds = Array.from(new Set([...triedDrinkIds, ...legacyTriedIds]));
-      await upsertTriedIds(client, userId, legacyTriedIds);
     }
 
     const replaced = await replaceCurrentDrinks(client, userId, parsedDrinks);
     if (!replaced) {
       return emptyCellar;
     }
-
-    await deleteLegacyCellarIfPresent(client);
 
     return formatFromCurrentDrinks(parsedDrinks, triedDrinkIds);
   } catch (error) {
@@ -397,29 +262,26 @@ const createOrReplaceCellar = async (drinksList) => {
 const updateTriedIds = async (drinkId, action) => {
   try {
     const client = generateClient();
+    assertScalableModels(client);
+
     const { userId } = await getCurrentUser();
 
     if (action === 'clear') {
-      const { data: existingTried, errors } = await listAllModelItems(client.models.TriedDrink.list.bind(client.models.TriedDrink));
+      const { data: existingTried, errors } = await listAllModelItems(client.models.TriedDrink);
       if (errors) {
         console.error('-- Error fetching tried drinks for clear --', errors);
         return emptyCellar;
       }
 
-      const deleteResults = await runInBatches(
-        existingTried,
-        MUTATION_BATCH_SIZE,
-        (triedRecord) => client.models.TriedDrink.delete({ id: triedRecord.id }, { authMode: 'userPool' })
+      const deleteResults = await runInBatches(existingTried, (triedRecord) =>
+        client.models.TriedDrink.delete({ id: triedRecord.id }, { authMode: 'userPool' })
       );
 
-      const failedDeletes = deleteResults.filter((result) => result.status === 'rejected' || result.value?.errors?.length > 0);
+      const failedDeletes = deleteResults.filter(
+        (result) => result.status === 'rejected' || result.value?.errors?.length > 0
+      );
       if (failedDeletes.length > 0) {
         console.error('-- Error clearing tried drinks --', failedDeletes);
-        return emptyCellar;
-      }
-
-      const syncedLegacy = await syncLegacyTriedIds(client, 'clear');
-      if (!syncedLegacy) {
         return emptyCellar;
       }
 
@@ -436,7 +298,9 @@ const updateTriedIds = async (drinkId, action) => {
     if (action === 'remove') {
       const { errors } = await client.models.TriedDrink.delete({ id }, { authMode: 'userPool' });
       if (errors?.length > 0) {
-        const notFoundOnly = errors.every((error) => (error?.message || '').toLowerCase().includes('not found'));
+        const notFoundOnly = errors.every((error) =>
+          (error?.message || '').toLowerCase().includes('not found')
+        );
         if (!notFoundOnly) {
           console.error('-- Error removing tried drink id --', errors);
           return emptyCellar;
@@ -452,17 +316,14 @@ const updateTriedIds = async (drinkId, action) => {
       );
 
       if (errors?.length > 0) {
-        const alreadyExistsOnly = errors.every((error) => (error?.message || '').toLowerCase().includes('already exists'));
+        const alreadyExistsOnly = errors.every((error) =>
+          (error?.message || '').toLowerCase().includes('already exists')
+        );
         if (!alreadyExistsOnly) {
           console.error('-- Error adding tried drink id --', errors);
           return emptyCellar;
         }
       }
-    }
-
-    const syncedLegacy = await syncLegacyTriedIds(client, action, normalizedDrinkId);
-    if (!syncedLegacy) {
-      return emptyCellar;
     }
 
     return getCellar();
@@ -485,12 +346,12 @@ const applyUploadAndTriedOperations = (operations) => {
     }
 
     if (operation.type === 'markTried') {
-      operation.drinkIds.forEach((drinkId) => triedDrinkIdSet.add(drinkId));
+      operation.drinkIds.forEach((id) => triedDrinkIdSet.add(id));
     }
   });
 
   const currentDrinkSet = new Set(currentDrinkIds);
-  const triedInCurrent = Array.from(triedDrinkIdSet).filter((drinkId) => currentDrinkSet.has(drinkId));
+  const triedInCurrent = Array.from(triedDrinkIdSet).filter((id) => currentDrinkSet.has(id));
 
   return {
     currentDrinkIds,

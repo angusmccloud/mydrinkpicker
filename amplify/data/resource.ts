@@ -20,16 +20,6 @@ const schema = a.schema({
       drinkId: a.integer().required(),
     })
     .authorization((allow) => [allow.owner()]),
-
-  // Legacy model retained for migrate-on-next-upload fallback.
-  Cellar: a
-    .model({
-      drinks: a.json().array(),
-      triedDrinkIds: a.string().array(),
-    })
-    .authorization((allow) => [
-      allow.owner(),
-    ]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
