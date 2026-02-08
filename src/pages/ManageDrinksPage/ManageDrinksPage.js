@@ -97,9 +97,7 @@ const ManageDrinksPage = () => {
           drinks[drinkId].bottles.push(bottle);
         });
         // console.log('-- drinks --', drinks);
-        const drinksArray = Object.values(drinks).map(value => JSON.stringify(value));
-        // console.log('-- drinksArray --', drinksArray);
-
+        const drinksArray = Object.values(drinks);
         const drinksData = await createOrReplaceCellar(drinksArray);
         handleFetchedDrinks(drinksData);
 
