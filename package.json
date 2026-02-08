@@ -68,8 +68,8 @@
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
-    "amplify:generate-outputs": "ampx generate outputs --app-id d1s042ouucc96o --branch main --format json --out-dir src",
-    "amplify:pipeline-deploy": "ampx pipeline-deploy --app-id d1s042ouucc96o --branch main --outputs-format json --outputs-out-dir src"
+    "amplify:generate-outputs": "ampx generate outputs --app-id d29pkywbp1ulxz --branch main --format json --out-dir src",
+    "amplify:pipeline-deploy": "ampx pipeline-deploy --app-id d29pkywbp1ulxz --branch main --outputs-format json --outputs-out-dir src"
   },
   "eslintConfig": {
     "extends": [
