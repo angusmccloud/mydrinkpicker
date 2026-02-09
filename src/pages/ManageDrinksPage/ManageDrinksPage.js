@@ -16,7 +16,7 @@ const ManageDrinksPage = () => {
   // const [cellarId, setCellarId] = useState('');
   const [drinks, setDrinks] = useState([]);
   const [displayedDrinks, setDisplayedDrinks] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [searchTerms, setSearchTerms] = useState('');
   const didInitialFetch = useRef(false);
@@ -58,6 +58,10 @@ const ManageDrinksPage = () => {
   };
 
   const handleFileUpload = async (event) => {
+    if (loading) {
+      return;
+    }
+
     const file = event.target.files[0];
     if (file) {
       setUploading(true);
@@ -136,7 +140,7 @@ const ManageDrinksPage = () => {
             <Info />
           </IconButton>
         </Tooltip> */}
-        <input type="file" accept=".xlsx" onChange={handleFileUpload} disabled={uploading} style={{marginTop: '10px'}} />
+        <input type="file" accept=".xlsx" onChange={handleFileUpload} disabled={uploading || loading} style={{marginTop: '10px'}} />
         <div style={{marginTop: 10}}>
           <TextField 
             id="searchDrinks"

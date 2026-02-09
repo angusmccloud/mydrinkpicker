@@ -108,6 +108,88 @@ const normalizeIncomingDrinksList = (drinksPayload) => {
     .filter((drink) => drink.drinkId !== null);
 };
 
+const toNullableNumber = (value) => {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const num = Number(value);
+  return Number.isNaN(num) ? null : num;
+};
+
+const normalizeBottle = (rawBottle, includeId = true) => {
+  const bottle = parseBottle(rawBottle);
+  if (!bottle) {
+    return null;
+  }
+
+  const normalized = {
+    status: bottle.status ? bottle.status.toString() : null,
+    size: toNullableNumber(bottle.size),
+    price: toNullableNumber(bottle.price),
+    dateAdded: bottle.dateAdded ? bottle.dateAdded.toString() : null,
+  };
+
+  if (includeId) {
+    return {
+      id: bottle.id ? bottle.id.toString() : '',
+      ...normalized,
+    };
+  }
+
+  return normalized;
+};
+
+const normalizeDrinkForStorage = (drink, includeBottleId = true) => {
+  const bottles = (Array.isArray(drink.bottles) ? drink.bottles : [])
+    .map((bottle) => normalizeBottle(bottle, includeBottleId))
+    .filter(Boolean)
+    .sort((a, b) => {
+      const keyA = `${a.status || ''}|${a.size ?? ''}|${a.price ?? ''}|${a.dateAdded || ''}`;
+      const keyB = `${b.status || ''}|${b.size ?? ''}|${b.price ?? ''}|${b.dateAdded || ''}`;
+      return keyA.localeCompare(keyB);
+    });
+
+  return {
+    drinkId: toNumberId(drink.drinkId),
+    brand: drink.brand?.toString?.() || '',
+    name: drink.name?.toString?.() || '',
+    bottlingSerie: drink.bottlingSerie ? drink.bottlingSerie.toString() : null,
+    statedAge: toNullableNumber(drink.statedAge),
+    strength: toNullableNumber(drink.strength),
+    type: drink.type ? drink.type.toString() : null,
+    imageUrl: drink.imageUrl ? drink.imageUrl.toString() : '',
+    bottles,
+  };
+};
+
+const serializeBottlesForStorage = (bottles) => bottles.map((bottle) => JSON.stringify(bottle));
+
+const toCurrentDrinkWriteInput = (drink) => {
+  const normalized = normalizeDrinkForStorage(drink);
+
+  return {
+    drinkId: normalized.drinkId,
+    brand: normalized.brand,
+    name: normalized.name,
+    bottlingSerie: normalized.bottlingSerie,
+    statedAge: normalized.statedAge,
+    strength: normalized.strength,
+    type: normalized.type,
+    imageUrl: normalized.imageUrl,
+    bottles: serializeBottlesForStorage(normalized.bottles),
+  };
+};
+
+const drinksAreDifferent = (leftDrink, rightDrink) => {
+  // Bottle IDs are generated per upload in the spreadsheet flow (uuidv4),
+  // so compare on stable bottle attributes only.
+  const left = normalizeDrinkForStorage(leftDrink, false);
+  const right = normalizeDrinkForStorage(rightDrink, false);
+
+  return JSON.stringify(left) !== JSON.stringify(right);
+};
+
 const formatDrink = (drink, triedDrinkIdSet) => {
   const bottles = (Array.isArray(drink.bottles) ? drink.bottles : [])
     .map((bottle) => parseBottle(bottle))
@@ -189,46 +271,90 @@ const replaceCurrentDrinks = async (client, userId, drinks) => {
     return false;
   }
 
-  if (existingCurrentDrinks.length > 0) {
-    const deleteResults = await runInBatches(existingCurrentDrinks, (drink) =>
+  const existingByDrinkId = new Map(
+    existingCurrentDrinks
+      .map((drink) => [toNumberId(drink.drinkId), drink])
+      .filter(([drinkId]) => drinkId !== null)
+  );
+  const incomingByDrinkId = new Map(
+    drinks
+      .map((drink) => [toNumberId(drink.drinkId), drink])
+      .filter(([drinkId]) => drinkId !== null)
+  );
+
+  const toCreate = [];
+  const toUpdate = [];
+  const toDelete = [];
+
+  incomingByDrinkId.forEach((incomingDrink, drinkId) => {
+    const existingDrink = existingByDrinkId.get(drinkId);
+    if (!existingDrink) {
+      toCreate.push(incomingDrink);
+      return;
+    }
+
+    if (drinksAreDifferent(existingDrink, incomingDrink)) {
+      toUpdate.push({ id: existingDrink.id, drink: incomingDrink });
+    }
+  });
+
+  existingByDrinkId.forEach((existingDrink, drinkId) => {
+    if (!incomingByDrinkId.has(drinkId)) {
+      toDelete.push(existingDrink);
+    }
+  });
+
+  if (toDelete.length > 0) {
+    const deleteResults = await runInBatches(toDelete, (drink) =>
       client.models.CurrentDrink.delete({ id: drink.id }, { authMode: 'userPool' })
     );
-
     const failedDeletes = deleteResults.filter(
       (result) => result.status === 'rejected' || result.value?.errors?.length > 0
     );
     if (failedDeletes.length > 0) {
-      console.error('-- Error clearing existing current drinks --', failedDeletes);
+      console.error('-- Error deleting removed current drinks --', failedDeletes);
       return false;
     }
   }
 
-  const createResults = await runInBatches(drinks, (drink) =>
-    client.models.CurrentDrink.create(
-      {
-        id: makeCurrentDrinkRecordId(userId, drink.drinkId),
-        drinkId: drink.drinkId,
-        brand: drink.brand?.toString?.() || '',
-        name: drink.name?.toString?.() || '',
-        bottlingSerie: drink.bottlingSerie ? drink.bottlingSerie.toString() : null,
-        statedAge: drink.statedAge ?? null,
-        strength: drink.strength ?? null,
-        type: drink.type ? drink.type.toString() : null,
-        imageUrl: drink.imageUrl ? drink.imageUrl.toString() : '',
-        bottles: (Array.isArray(drink.bottles) ? drink.bottles : []).map((bottle) =>
-          typeof bottle === 'string' ? bottle : JSON.stringify(bottle)
-        ),
-      },
-      { authMode: 'userPool' }
-    )
-  );
+  if (toCreate.length > 0) {
+    const createResults = await runInBatches(toCreate, (drink) =>
+      client.models.CurrentDrink.create(
+        {
+          id: makeCurrentDrinkRecordId(userId, drink.drinkId),
+          ...toCurrentDrinkWriteInput(drink),
+        },
+        { authMode: 'userPool' }
+      )
+    );
 
-  const failedCreates = createResults.filter(
-    (result) => result.status === 'rejected' || result.value?.errors?.length > 0
-  );
-  if (failedCreates.length > 0) {
-    console.error('-- Error creating current drinks --', failedCreates);
-    return false;
+    const failedCreates = createResults.filter(
+      (result) => result.status === 'rejected' || result.value?.errors?.length > 0
+    );
+    if (failedCreates.length > 0) {
+      console.error('-- Error creating new current drinks --', failedCreates);
+      return false;
+    }
+  }
+
+  if (toUpdate.length > 0) {
+    const updateResults = await runInBatches(toUpdate, ({ id, drink }) =>
+      client.models.CurrentDrink.update(
+        {
+          id,
+          ...toCurrentDrinkWriteInput(drink),
+        },
+        { authMode: 'userPool' }
+      )
+    );
+
+    const failedUpdates = updateResults.filter(
+      (result) => result.status === 'rejected' || result.value?.errors?.length > 0
+    );
+    if (failedUpdates.length > 0) {
+      console.error('-- Error updating changed current drinks --', failedUpdates);
+      return false;
+    }
   }
 
   return true;
