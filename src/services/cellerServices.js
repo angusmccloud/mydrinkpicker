@@ -73,6 +73,23 @@ const coerceDrink = (rawDrink) => {
   return rawDrink;
 };
 
+const parseBottle = (rawBottle) => {
+  if (!rawBottle) {
+    return null;
+  }
+
+  if (typeof rawBottle === 'string') {
+    try {
+      return JSON.parse(rawBottle);
+    } catch (error) {
+      console.error('-- Error parsing bottle JSON --', error);
+      return null;
+    }
+  }
+
+  return rawBottle;
+};
+
 const normalizeIncomingDrinksList = (drinksPayload) => {
   const rawDrinks = Array.isArray(drinksPayload)
     ? drinksPayload
@@ -92,7 +109,9 @@ const normalizeIncomingDrinksList = (drinksPayload) => {
 };
 
 const formatDrink = (drink, triedDrinkIdSet) => {
-  const bottles = Array.isArray(drink.bottles) ? drink.bottles : [];
+  const bottles = (Array.isArray(drink.bottles) ? drink.bottles : [])
+    .map((bottle) => parseBottle(bottle))
+    .filter(Boolean);
   const nonNullPrices = bottles
     .map((bottle) => bottle?.price)
     .filter((price) => price !== null && price !== undefined);
@@ -189,14 +208,16 @@ const replaceCurrentDrinks = async (client, userId, drinks) => {
       {
         id: makeCurrentDrinkRecordId(userId, drink.drinkId),
         drinkId: drink.drinkId,
-        brand: drink.brand,
-        name: drink.name,
-        bottlingSerie: drink.bottlingSerie || null,
+        brand: drink.brand?.toString?.() || '',
+        name: drink.name?.toString?.() || '',
+        bottlingSerie: drink.bottlingSerie ? drink.bottlingSerie.toString() : null,
         statedAge: drink.statedAge ?? null,
         strength: drink.strength ?? null,
-        type: drink.type || null,
-        imageUrl: drink.imageUrl || '',
-        bottles: Array.isArray(drink.bottles) ? drink.bottles : [],
+        type: drink.type ? drink.type.toString() : null,
+        imageUrl: drink.imageUrl ? drink.imageUrl.toString() : '',
+        bottles: (Array.isArray(drink.bottles) ? drink.bottles : []).map((bottle) =>
+          typeof bottle === 'string' ? bottle : JSON.stringify(bottle)
+        ),
       },
       { authMode: 'userPool' }
     )

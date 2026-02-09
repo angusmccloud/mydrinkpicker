@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PageContent } from '../../containers';
 import { getCellar } from '../../services/cellerServices';
 import PoisonPickerView from '../../containers/PoisonPickerView/PoisonPickerView';
@@ -6,6 +6,7 @@ import PoisonPickerView from '../../containers/PoisonPickerView/PoisonPickerView
 const HomePage = () => {
   const [drinks, setDrinks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const didInitialFetch = useRef(false);
 
   const handleChangeTried = (drinkId, tried) => {
     const updatedDrinks = drinks.map((drink) => {
@@ -27,6 +28,10 @@ const HomePage = () => {
   };
 
   useEffect(() => {
+    if (didInitialFetch.current) {
+      return;
+    }
+    didInitialFetch.current = true;
     fetchDrinks();
   }, []);
 

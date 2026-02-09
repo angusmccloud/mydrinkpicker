@@ -6,6 +6,7 @@
     "identity_pool_id": "us-east-1:2340c70f-02ad-4af0-9ad7-96a4b51eb561",
     "mfa_methods": [],
     "standard_required_attributes": [
+      "sub",
       "email"
     ],
     "username_attributes": [
@@ -25,7 +26,7 @@
     "unauthenticated_identities_enabled": true
   },
   "data": {
-    "url": "https://iiokqqkslfci3agfionnz5fnbu.appsync-api.us-east-1.amazonaws.com/graphql",
+    "url": "https://eg7q6ajwvremjdor5itd7tre5m.appsync-api.us-east-1.amazonaws.com/graphql",
     "aws_region": "us-east-1",
     "default_authorization_type": "AMAZON_COGNITO_USER_POOLS",
     "authorization_types": [
@@ -34,8 +35,8 @@
     "model_introspection": {
       "version": 1,
       "models": {
-        "Cellar": {
-          "name": "Cellar",
+        "CurrentDrink": {
+          "name": "CurrentDrink",
           "fields": {
             "id": {
               "name": "id",
@@ -44,21 +45,69 @@
               "isRequired": true,
               "attributes": []
             },
-            "drinks": {
-              "name": "drinks",
+            "drinkId": {
+              "name": "drinkId",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": true,
+              "attributes": []
+            },
+            "brand": {
+              "name": "brand",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "name": {
+              "name": "name",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "bottlingSerie": {
+              "name": "bottlingSerie",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "statedAge": {
+              "name": "statedAge",
+              "isArray": false,
+              "type": "Float",
+              "isRequired": false,
+              "attributes": []
+            },
+            "strength": {
+              "name": "strength",
+              "isArray": false,
+              "type": "Float",
+              "isRequired": false,
+              "attributes": []
+            },
+            "type": {
+              "name": "type",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "imageUrl": {
+              "name": "imageUrl",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "bottles": {
+              "name": "bottles",
               "isArray": true,
               "type": "AWSJSON",
               "isRequired": false,
               "attributes": [],
-              "isArrayNullable": true
-            },
-            "triedDrinkIds": {
-              "name": "triedDrinkIds",
-              "isArray": true,
-              "type": "String",
-              "isRequired": false,
-              "attributes": [],
-              "isArrayNullable": true
+              "isArrayNullable": false
             },
             "createdAt": {
               "name": "createdAt",
@@ -78,7 +127,74 @@
             }
           },
           "syncable": true,
-          "pluralName": "Cellars",
+          "pluralName": "CurrentDrinks",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "provider": "userPools",
+                    "ownerField": "owner",
+                    "allow": "owner",
+                    "identityClaim": "cognito:username",
+                    "operations": [
+                      "create",
+                      "update",
+                      "delete",
+                      "read"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        },
+        "TriedDrink": {
+          "name": "TriedDrink",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "drinkId": {
+              "name": "drinkId",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": true,
+              "attributes": []
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "TriedDrinks",
           "attributes": [
             {
               "type": "model",
@@ -115,5 +231,5 @@
       "nonModels": {}
     }
   },
-  "version": "1"
+  "version": "1.4"
 }

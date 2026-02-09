@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 import { formatDate } from '../../utils/dateUtils';
@@ -19,6 +19,7 @@ const ManageDrinksPage = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [searchTerms, setSearchTerms] = useState('');
+  const didInitialFetch = useRef(false);
 
   const theme = useTheme();
 
@@ -164,6 +165,10 @@ const ManageDrinksPage = () => {
   }
 
   useEffect(() => {
+    if (didInitialFetch.current) {
+      return;
+    }
+    didInitialFetch.current = true;
     fetchDrinks();
   }, []);
 
